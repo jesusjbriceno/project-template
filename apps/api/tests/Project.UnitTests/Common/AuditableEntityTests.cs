@@ -12,6 +12,12 @@ public class AuditableEntityTests
         {
             Name = name;
         }
+
+        /// <summary>Public wrapper for protected MarkDeleted — used by tests only.</summary>
+        public void Delete(string deletedBy, IClock clock)
+        {
+            MarkDeleted(deletedBy, clock);
+        }
     }
 
     private sealed class FixedClock(DateTimeOffset now) : IClock
@@ -59,7 +65,7 @@ public class AuditableEntityTests
         var entity = new TestEntity("test");
 
         entity.MarkCreated("creator-1", clock);
-        entity.MarkDeleted("deleter-1", new FixedClock(new DateTimeOffset(2026, 6, 15, 12, 0, 0, TimeSpan.Zero)));
+        entity.Delete("deleter-1", new FixedClock(new DateTimeOffset(2026, 6, 15, 12, 0, 0, TimeSpan.Zero)));
 
         Assert.Equal(new DateTimeOffset(2026, 6, 15, 12, 0, 0, TimeSpan.Zero), entity.DeletedAt);
         Assert.Equal("deleter-1", entity.DeletedBy);
