@@ -19,7 +19,7 @@
 | 9 | RefreshToken family revoke | `FamilyId` per token; `IsActive/IsExpired/IsReuseSignal/Rotate/Revoke`. `IsReuseSignal()` = revoked + replaced. Domain returns family id; Application cascades |
 | 10 | MenuItem cycle | `MenuItem.SetParent(ParentId?, IReadOnlyCollection<MenuItem> allItems)` walks ancestors, throws if `self` appears |
 | 11 | Test framework | xUnit v2.9.3; v3 migration is its own change |
-| 12 | Junctions | `UserRole`/`RolePermission` sealed classes with `Assign(assignedBy, clock)` factory + composite identity (e.g. `UserRoleId(UserId, RoleId)`) so the PK is one type, not two parameters that can swap |
+| 12 | Junctions | `UserRole`/`RolePermission` sealed classes with `Assign(assignedBy, clock)` factory + composite identity (e.g. `UserRoleId(UserId, RoleId)`) so the PK is one type, not two parameters that can swap. Junctions use assignment-specific audit fields (`AssignedAt`/`AssignedBy`) instead of full `AuditableEntity` lifecycle — they are association records, not full lifecycle entities.
 
 ### Tradeoff (Decision #5)
 

@@ -48,10 +48,10 @@ Chain strategy: feature-branch-chain
 
 ## Phase 3: Core RBAC Entities
 
-- [ ] 3.1 (RED→GREEN) `Entities/Permission.cs` — `PermissionKey`, `Description`, `Category`; tests for creation with valid key
-- [ ] 3.2 (RED→GREEN) `Entities/Role.cs` — `Name`, `IsSystem`, `CopyPermissionsTo(Role)` point-in-time; tests for system role deletion guard
-- [ ] 3.3 (RED→GREEN) `Entities/RolePermission.cs` — `RolePermissionId` composite, `AssignedAt`/`AssignedBy`, `Assign()` factory; tests for assignment audit
-- [ ] 3.4 Write integrated Role tests: AddPermission/RemovePermission, CopyPermissions point-in-time isolation
+- [x] 3.1 (RED→GREEN) `Entities/Permission.cs` — `PermissionKey`, `Description`, `Category`; tests for creation with valid key
+- [x] 3.2 (RED→GREEN) `Entities/Role.cs` — `Name`, `IsSystem`, `CopyPermissionsTo(Role)` point-in-time; tests for system role deletion guard
+- [x] 3.3 (RED→GREEN) `Entities/RolePermission.cs` — `RolePermissionId` composite, `AssignedAt`/`AssignedBy`, `Assign()` factory; tests for assignment audit
+- [x] 3.4 Write integrated Role tests: AddPermission/RemovePermission, CopyPermissions point-in-time isolation
 
 ## Phase 4: User & UserRole
 
