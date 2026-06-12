@@ -1,0 +1,81 @@
+# openspec/config.yaml
+schema: spec-driven
+
+context: |
+  Monorepo: apps/api/, apps/web/, packages/
+  Backend: .NET 10, ASP.NET Core, Clean Architecture + CQRS + Result pattern
+  Frontend: React + TypeScript + Tailwind + pnpm (placeholder until Phase 9)
+  Persistence: EF Core + PostgreSQL (EF Core only in Infrastructure layer)
+  Auth: JWT access + refresh token rotation, RBAC
+  Frontend state: Zustand, validation: Zod, router: TanStack Router
+  Delivery: Docker Compose
+  Quality: TDD mandatory, OWASP Top Ten, SonarAnalyzer.CSharp
+
+strict_tdd: true
+
+testing:
+  strict_tdd_mode: true
+  detected: "2026-06-12"
+  test_runner:
+    command: "dotnet test"
+    framework: "xUnit v2.9.3"
+  test_layers:
+    unit:
+      available: true
+      project: Project.UnitTests
+      tool: "xUnit + coverlet"
+    integration:
+      available: true
+      project: Project.IntegrationTests
+      tool: "xUnit + WebApplicationFactory + Testcontainers"
+    application:
+      available: true
+      project: Project.ApplicationTests
+      tool: "xUnit + coverlet"
+    e2e:
+      available: false
+      tool: null
+  coverage:
+    available: true
+    tool: "coverlet.collector v6.0.4"
+    command: "dotnet test --collect:\"XPlat Code Coverage\""
+  quality_tools:
+    linter:
+      available: true
+      tool: "SonarAnalyzer.CSharp"
+      command: "dotnet build /p:RunAnalyzersDuringBuild=true"
+    type_checker:
+      available: true
+      tool: ".NET nullable analysis"
+      command: "dotnet build"
+    formatter:
+      available: false
+      tool: null
+      command: null
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Reference specific AGENTS.md and openspec/config.yaml constraints
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+    - Follow Clean Architecture layer rules (Domain -> Application -> Infrastructure -> API)
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+    - One commit per task with Conventional Commits
+  apply:
+    - Follow existing code patterns from AGENTS.md
+    tdd: true
+    test_command: "dotnet test apps/api"
+  verify:
+    test_command: "dotnet test apps/api"
+    build_command: "dotnet build apps/api"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas
+    - Update openspec/specs/ when deltas are merged
