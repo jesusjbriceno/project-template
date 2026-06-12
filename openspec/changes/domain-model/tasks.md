@@ -30,10 +30,10 @@ Chain strategy: feature-branch-chain
 
 ## Phase 1: Foundation (IDs + Errors)
 
-- [ ] 1.1 Create `ValueObjects/Ids/*.cs` — 7 ID record structs (`UserId`, `RoleId`, `PermissionId`, `RefreshTokenId`, `MenuItemId`, `UserRoleId`, `RolePermissionId`) with `New()`, `From(Guid)`, implicit `Guid` conversion
-- [ ] 1.2 Write ID tests: `New()` unique, `From()` round-trip, value equality, implicit Guid identity
-- [ ] 1.3 Create `Errors/DomainException.cs` base class + 7 sealed derivatives: `LastSuperadminGuardException`, `SystemRoleProtectedException`, `MenuCycleDetectedException`, `RefreshTokenReuseSignalException`, `InvalidEmailException`, `InvalidPermissionKeyException`, `DeletionPolicyViolationException`
-- [ ] 1.4 Write domain exception tests: instantiation, message, inheritance
+- [x] 1.1 Create `ValueObjects/Ids/*.cs` — 7 ID types: 5 simple (`UserId`, `RoleId`, `PermissionId`, `RefreshTokenId`, `MenuItemId`) as `sealed class` + `IEquatable<T>` with private constructors, `New()`/`From(Guid)`, implicit `Guid` conversion; 2 composite (`UserRoleId`, `RolePermissionId`) with `From()` factory, null guards, `Deconstruct()`
+- [x] 1.2 Write ID tests (34 tests): `New()`/`From()`/`From(Guid.Empty)` guard/equality/implicit conversion/`default` null/composite null-guards/Deconstruct
+- [x] 1.3 Create `Errors/DomainException.cs` base class + 7 sealed derivatives: `LastSuperadminGuardException`, `SystemRoleProtectedException`, `MenuCycleDetectedException`, `RefreshTokenReuseSignalException`, `InvalidEmailException`, `InvalidPermissionKeyException`, `DeletionPolicyViolationException`
+- [x] 1.4 Write domain exception tests: instantiation, message, inheritance
 
 ## Phase 2: Value Objects & Policies
 
