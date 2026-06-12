@@ -37,13 +37,14 @@ Chain strategy: feature-branch-chain
 
 ## Phase 2: Value Objects & Policies
 
-- [ ] 2.1 (RED→GREEN) `ValueObjects/Email.cs` — RFC 5322 validation, lowercase domain normalization, value equality; tests for valid/invalid/null formats, equality
-- [ ] 2.2 (RED→GREEN) `ValueObjects/PermissionKey.cs` — lowercase `action.resource` validation; tests for valid keys, uppercase/spaces rejection, equality
-- [ ] 2.3 Create `Policies/DeletionPolicy.cs` — sealed record `(SoftDeleteEnabled, RecycleBinVisible, RestoreAllowed, HardDeleteAllowed)` + static defaults per entity
-- [ ] 2.4 Write DeletionPolicy tests: User defaults (soft-only), RefreshToken defaults, dimension access
-- [ ] 2.5 Create `Common/IClock.cs` + `SystemClock.cs` — UTC `UtcNow` abstraction
-- [ ] 2.6 Create `Common/AuditableEntity.cs` — `DateTimeOffset` CreatedAt/CreatedBy/UpdatedAt/UpdatedBy/DeletedAt/DeletedBy + lifecycle methods
-- [ ] 2.7 Write AuditableEntity tests: fields set on creation, update modifies UpdatedAt
+- [x] 2.1 (RED→GREEN) `ValueObjects/Email.cs` — pragmatic RFC 5322 validation, full lowercase normalization, value equality; tests for valid/invalid/null formats, equality
+- [x] 2.2 (RED→GREEN) `ValueObjects/PermissionKey.cs` — lowercase `action.resource` validation; tests for valid keys, uppercase/spaces rejection, equality
+- [x] 2.3 Create `Policies/DeletionPolicy.cs` — sealed record `(SoftDeleteEnabled, RecycleBinVisible, RestoreAllowed, HardDeleteAllowed)` + static defaults per entity
+- [x] 2.4 Write DeletionPolicy tests: User defaults (soft-only), RefreshToken defaults, dimension access
+- [x] 2.5 Create `Common/IClock.cs` + `SystemClock.cs` — UTC `UtcNow` abstraction
+- [x] 2.6 Create `Common/AuditableEntity.cs` — `DateTimeOffset` CreatedAt/CreatedBy/UpdatedAt/UpdatedBy/DeletedAt/DeletedBy + lifecycle methods
+- [x] 2.7 Write AuditableEntity tests: fields set on creation, update modifies UpdatedAt
+- [x] 2.8 Fix Email validation gaps (no local/domain part, spaces, no TLD dot) + PermissionKey segment enforcement (exactly 2 segments). Review fix: 8 critical findings resolved.
 
 ## Phase 3: Core RBAC Entities
 
