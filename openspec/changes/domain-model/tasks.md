@@ -55,10 +55,10 @@ Chain strategy: feature-branch-chain
 
 ## Phase 4: User & UserRole
 
-- [ ] 4.1 (RED→GREEN) `Entities/User.cs` — `Email`, `IsActive`, `PasswordHash`, `SecurityStamp`, `LastLoginAt`, `UserRoles`; tests for creation, deactivation, soft-delete auth block
-- [ ] 4.2 (RED→GREEN) `Entities/UserRole.cs` — `UserRoleId` composite, `AssignedAt`/`AssignedBy`, `Assign()` factory; tests for assignment tracking
-- [ ] 4.3 Write `User.RemoveRole()` with `IReadOnlyCollection<User>` superadmin guard: 0/1/2 active Superadmins boundary
-- [ ] 4.4 Write `User.AssignRole()` superadmin gate: non-Superadmin assigning Superadmin signals domain violation
+- [x] 4.1 (RED→GREEN) `Entities/User.cs` — `Email`, `IsActive`, `PasswordHash`, `SecurityStamp`, `LastLoginAt`, `UserRoles`; tests for creation, deactivation, soft-delete auth block
+- [x] 4.2 (RED→GREEN) `Entities/UserRole.cs` — `UserRoleId` composite, `AssignedAt`/`AssignedBy`, `Assign()` factory; tests for assignment tracking
+- [x] 4.3 Write `User.RemoveRole()` with `IReadOnlyCollection<User>` superadmin guard: 0/1/2 active Superadmins boundary
+- [x] 4.4 Write `User.AssignRole()` superadmin gate: non-Superadmin assigning Superadmin signals domain violation
 
 ## Phase 5: RefreshToken + MenuItem
 

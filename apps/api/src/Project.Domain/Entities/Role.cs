@@ -89,13 +89,22 @@ public sealed class Role : AuditableEntity
 
     /// <summary>
     /// Overrides soft-delete to protect system roles from deletion.
-    /// Uses override (not new) so the guard is polymorphic — casts to AuditableEntity cannot bypass it.
+    /// Protected — external callers must use <see cref="Delete"/> which routes through this guard.
     /// </summary>
-    public override void MarkDeleted(string deletedBy, IClock clock)
+    protected override void MarkDeleted(string deletedBy, IClock clock)
     {
         if (IsSystem)
             throw new SystemRoleProtectedException(
                 $"System role '{Name}' cannot be deleted.");
         base.MarkDeleted(deletedBy, clock);
+    }
+
+    /// <summary>
+    /// Soft-deletes the role. System roles (IsSystem=true) are protected and will throw
+    /// <see cref="SystemRoleProtectedException"/>.
+    /// </summary>
+    public void Delete(string deletedBy, IClock clock)
+    {
+        MarkDeleted(deletedBy, clock);
     }
 }

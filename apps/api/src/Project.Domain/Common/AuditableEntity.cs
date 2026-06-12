@@ -38,9 +38,10 @@ public abstract class AuditableEntity
 
     /// <summary>
     /// Marks the entity as soft-deleted, setting the Deleted fields.
-    /// Virtual so subclasses can override to enforce deletion guards (e.g. system role protection).
+    /// Protected so subclasses can override to enforce deletion guards (e.g. system role protection)
+    /// without external callers bypassing entity-specific rules via an AuditableEntity reference.
     /// </summary>
-    public virtual void MarkDeleted(string deletedBy, IClock clock)
+    protected virtual void MarkDeleted(string deletedBy, IClock clock)
     {
         DeletedAt = clock.UtcNow;
         DeletedBy = deletedBy;

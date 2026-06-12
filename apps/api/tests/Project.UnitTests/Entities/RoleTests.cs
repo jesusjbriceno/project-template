@@ -86,36 +86,40 @@ public class RoleTests
     }
 
     [Fact]
-    public void MarkDeleted_OnSystemRole_ThrowsSystemRoleProtectedException()
+    public void Delete_OnSystemRole_ThrowsSystemRoleProtectedException()
     {
         var clock = new FakeClock();
         var role = Role.Create("superadmin", true, "system", clock);
 
         var ex = Assert.Throws<SystemRoleProtectedException>(() =>
-            role.MarkDeleted("admin", clock));
+            role.Delete("admin", clock));
         Assert.Contains("system", ex.Message.ToLowerInvariant());
     }
 
     [Fact]
-    public void MarkDeleted_ViaAuditableEntityReference_OnSystemRole_ThrowsSystemRoleProtectedException()
+    public void MarkDeleted_IsProtected_NotCallableExternally()
     {
-        // Regression: casts to AuditableEntity must not bypass the system role deletion guard.
-        var clock = new FakeClock();
-        var role = Role.Create("superadmin", true, "system", clock);
-        AuditableEntity entity = role;
+        // Verifies the regression fix: MarkDeleted is protected, so external code
+        // cannot bypass the system role guard by casting to AuditableEntity.
+        // Only the public Delete() method is available.
+        var auditableMethod = typeof(AuditableEntity).GetMethod(
+            "MarkDeleted",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+        Assert.Null(auditableMethod);
 
-        var ex = Assert.Throws<SystemRoleProtectedException>(() =>
-            entity.MarkDeleted("admin", clock));
-        Assert.Contains("system", ex.Message.ToLowerInvariant());
+        var roleMethod = typeof(Role).GetMethod(
+            "MarkDeleted",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+        Assert.Null(roleMethod);
     }
 
     [Fact]
-    public void MarkDeleted_OnNonSystemRole_Succeeds()
+    public void Delete_OnNonSystemRole_Succeeds()
     {
         var clock = new FakeClock();
         var role = Role.Create("Custom", false, "system", clock);
 
-        role.MarkDeleted("admin", clock);
+        role.Delete("admin", clock);
 
         Assert.True(role.IsDeleted);
         Assert.Equal("admin", role.DeletedBy);

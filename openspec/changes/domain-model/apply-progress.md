@@ -1,11 +1,11 @@
-# Apply Progress: Domain Model — Slice 1 + Slice 2 + Slice 3
+# Apply Progress: Domain Model — Slice 1 + Slice 2 + Slice 3 + Slice 4
 
-**Branches**: `feature/domain-model-02-value-objects` (Slices 1-2), `feature/domain-model-03-rbac-core` (Slice 3)
+**Branches**: `feature/domain-model-02-value-objects` (Slices 1-2), `feature/domain-model-03-rbac-core` (Slice 3), `feature/domain-model-04-users` (Slice 4)
 **Base**: `develop`
 **Date**: 2026-06-12
 **Mode**: Strict TDD
-**Slices completed**: 1 (ID primitives + domain errors), 2 (Value objects, policies, clock, auditable base), 3 (Core RBAC: Permission, Role, RolePermission)
-**Status**: Slice 3 complete. Ready for Slice 4 (User + UserRole).
+**Slices completed**: 1 (ID primitives + domain errors), 2 (Value objects, policies, clock, auditable base), 3 (Core RBAC: Permission, Role, RolePermission), 4 (User + UserRole + superadmin guards incl. soft-delete guard)
+**Status**: Slice 4 soft-delete guard implemented. Ready for fresh review. Slice 5 (RefreshToken + MenuItem) pending.
 
 ---
 
@@ -35,14 +35,24 @@
 | 3.3 | `Entities/RolePermissionTests.cs` | Unit | ✅ 122/122 | ✅ compile error (RolePermission class missing) | ✅ 5/5 passed | ✅ 5 cases (assign, composite id, null guards, equality) | ➖ Clean |
 | 3.4 | Integrated in `RoleTests.cs` | Unit | ✅ 128/128 | N/A (covered in 3.2) | ✅ included in 3.2 | ✅ AddPermission, RemovePermission, CopyPermissions, point-in-time | ➖ Clean |
 
+### Slice 4 (this batch)
+| Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
+|------|-----------|-------|------------|-----|-------|-------------|----------|
+| 4.1 | `Entities/UserTests.cs` | Unit | ✅ 149/149 | ✅ 37 compile errors (User class missing) | ✅ 26/26 new passed; 175/175 total | ✅ 13 cases (create, deactivate, blocked, defaults, audit, null/empty guards) | ➖ Clean |
+| 4.2 | `Entities/UserRoleTests.cs` | Unit | ✅ 149/149 | ✅ compile errors (UserRole class missing) | ✅ 5/5 passed; 180/180 total | ✅ 5 cases (assign, composite id, null userId/roleId guards, equality) | ➖ Clean |
+| 4.3 | Integrated in `UserTests.cs` | Unit | ✅ 175/175 | ✅ compile errors (method missing) | ✅ included in 4.1 | ✅ 4 cases (last superadmin guard, other exists, non-superadmin, inactive user) | ➖ Clean |
+| 4.4 | Integrated in `UserTests.cs` | Unit | ✅ 175/175 | ✅ compile errors (method missing) | ✅ included in 4.1 | ✅ 3 cases (non-superadmin blocked, superadmin succeeds, non-superadmin non-blocked) | ➖ Clean |
+| Review | `Entities/UserTests.cs` + `Entities/User.cs` | Unit | ✅ 180/180 | ✅ compile errors (missing guard params, removed bypass) | ✅ 189/189 passed | ✅ 9 cases (deactivate guard, MarkDeleted override + polymorphism, AssignRole bypass) | ➖ Clean |
+| Review-2 | `Entities/UserTests.cs` + `Entities/User.cs` + `Entities/Role.cs` + `Common/AuditableEntity.cs` | Unit | ✅ 189/189 | ✅ compile errors (MarkDeleted protected, Delete method missing) | ✅ 192/192 passed | ✅ 6 cases (3 new: delete last-superadmin guard, delete with other active, null guard; 3 updated: MarkDeleted→Delete regression + protected-reflection test) | ➖ Clean |
+
 ---
 
 ## Test Summary
-- **Total tests written**: 149 (122 Slice 1+2 + 26 Slice 3 + 1 review fix)
-- **Total tests passing**: 149
-- **Layers used**: Unit (149)
+- **Total tests written**: 192 (149 prior slices + 31 Slice 4 + 9 review fixes + 3 second-review soft-delete guard)
+- **Total tests passing**: 192
+- **Layers used**: Unit (192)
 - **Approval tests** (refactoring): None
-- **Entities created**: 3 (Permission, Role, RolePermission)
+- **Entities created**: 5 (Permission, Role, RolePermission, User, UserRole)
 
 ---
 
@@ -70,6 +80,12 @@
 - [x] 3.3 `Entities/RolePermission.cs` — composite RolePermissionId, AssignedAt/AssignedBy, Assign() factory; tests (5)
 - [x] 3.4 Integrated Role tests — AddPermission duplicate rejection, RemovePermission, CopyPermissions point-in-time isolation, system role protection
 
+### Slice 4
+- [x] 4.1 `Entities/User.cs` — Email, IsActive, PasswordHash, SecurityStamp, LastLoginAt, UserRoles collection; Create() factory; Deactivate() lifecycle; IsBlocked for soft-delete auth block; extends AuditableEntity (13 tests)
+- [x] 4.2 `Entities/UserRole.cs` — composite UserRoleId, AssignedAt/AssignedBy, Assign() factory; junction entity with assignment-audit (not AuditableEntity) (5 tests)
+- [x] 4.3 `User.RemoveRole()` with `IReadOnlyCollection<User> activeSuperadmins` guard — last-superadmin-boundary: 0/1/2 active Superadmins; inactive user no-guard; non-superadmin role no-guard (4 tests)
+- [x] 4.4 `User.AssignRole()` superadmin creation gate — `IReadOnlyCollection<Role> actorRoles` parameter; non-superadmin assigning superadmin throws LastSuperadminGuardException; superadmin assigning superadmin succeeds; non-superadmin assigning non-superadmin succeeds (3 tests)
+
 ---
 
 ## Files Changed
@@ -85,6 +101,16 @@
 | `apps/api/tests/Project.UnitTests/Entities/RolePermissionTests.cs` | Created | 5 tests: Assign with valid IDs, composite ID access, null roleId guard, null permissionId guard, equality of two assignments with same FKs |
 | `openspec/changes/domain-model/tasks.md` | Modified | Marked 3.1-3.4 as `[x]` |
 | `openspec/changes/domain-model/apply-progress.md` | Modified | Merged Slice 3 TDD evidence, test summary, completed tasks, files changed |
+
+### New in Slice 4
+| File | Action | What Was Done |
+|------|--------|---------------|
+| `apps/api/src/Project.Domain/Entities/User.cs` | Created | `sealed class` extending `AuditableEntity`. Uses `UserId`, `Email`, `string PasswordHash` (opaque), `SecurityStamp` (Guid N-format), `LastLoginAt` (DateTimeOffset?), `IReadOnlyCollection<UserRole>`. `Create()` factory. `Deactivate()` sets `IsActive=false` + audit. `IsBlocked` = !IsActive. `AssignRole()` with optional `actorRoles` superadmin gate. `RemoveRole()` with `activeSuperadmins` last-superadmin guard. `DefaultPolicy` = `UserDefault`. |
+| `apps/api/src/Project.Domain/Entities/UserRole.cs` | Created | `sealed class` (not AuditableEntity — junction with assignment audit). Composite identity via `UserRoleId`. `AssignedAt` (DateTimeOffset), `AssignedBy` (string). `Assign()` static factory with null guards. Follows same pattern as `RolePermission`. |
+| `apps/api/tests/Project.UnitTests/Entities/UserTests.cs` | Created | 26 tests: Create (valid email, passwordHash, null/empty guards, unique security stamps), Deactivate (active → inactive with audit, idempotent), IsBlocked (active=false, inactive=true), DefaultPolicy, AuditableEntity inheritance, MarkDeleted; AssignRole (valid, duplicate guard, null guard); RemoveRole (existing, non-existing, null guard); Last superadmin guard (last throws, other exists succeeds, non-superadmin skipped, inactive user skipped); Superadmin gate (non-superadmin blocked, superadmin succeeds, non-superadmin non-blocked) |
+| `apps/api/tests/Project.UnitTests/Entities/UserRoleTests.cs` | Created | 5 tests: Assign with valid IDs (audit check), composite Id access via UserRoleId, null userId guard, null roleId guard, equality of same UserId+RoleId assignment |
+| `openspec/changes/domain-model/tasks.md` | Modified | Marked 4.1-4.4 as `[x]` |
+| `openspec/changes/domain-model/apply-progress.md` | Modified | Merged Slice 4 TDD evidence, test summary, completed tasks, files changed |
 
 ### Previous Slices (1-2)
 | File | Action | What Was Done |
@@ -113,9 +139,52 @@
 - **RolePermission non-Auditable**: RolePermission does not extend `AuditableEntity` — it is a junction entity with its own `AssignedAt`/`AssignedBy` assignment audit. This matches the design contract where junction entities carry assignment metadata distinct from entity lifecycle audit.
 - **CopyPermissionsTo**: Implemented as an instance method on Role (`source.CopyPermissionsTo(target, ...)`) per design contract `Role.CopyPermissionsTo(Role)`.
 
+### Slice 4
+- **User.IsBlocked = !IsActive**: Per spec "soft-deleted users (IsActive=false) MUST be functionally blocked from auth/authorization". The `IsBlocked` property directly mirrors `!IsActive`, keeping the domain simple — deactivation IS the soft-delete/auth-block mechanism. No separate `IsDeleted` soft-delete path needed on User for auth blocking.
+- **Superadmin identification**: Uses `role.IsSystem && "superadmin".Equals(role.Name, StringComparison.OrdinalIgnoreCase)` as a private static helper. This is a pragmatic domain-level check. A future iteration may extract this to a constant or policy class, but for now the well-known system role name is sufficient.
+- **User.HasSuperadminRole() removed**: The User entity only stores `RoleId` values in `UserRole` junctions — it cannot determine role names/types from IDs alone. The Application layer is responsible for pre-building the `activeSuperadmins` collection passed to `RemoveRole()` and `Deactivate()`. This keeps Domain persistence-free.
+- **Deactivate now includes last-superadmin guard** (FIXED 2026-06-12): `Deactivate()` accepts `IReadOnlyCollection<User> activeSuperadmins` parameter, matching the pattern in `RemoveRole()`. When the user is active and is the only entry in the active superadmins collection, deactivation throws `LastSuperadminGuardException`. Previously documented as "deferred" — now implemented inline.
+- **MarkDeleted override added on User** (FIXED 2026-06-12, revised 2026-06-12): `User` now overrides `MarkDeleted` (protected override) to set `IsActive = false` before calling `base.MarkDeleted()`. This ensures functional auth blocking (`IsBlocked = true`) via any internal code path. **Revised**: `AuditableEntity.MarkDeleted` is now `protected virtual` (was `public virtual`). External callers must use entity-specific `Delete()` methods that enforce domain invariants — `User.Delete(activeSuperadmins, ...)` for superadmin guard, `Role.Delete(...)` for system-role guard. This prevents polymorphic bypass through `AuditableEntity` references entirely: the API shape makes it impossible to call `MarkDeleted` from outside the entity hierarchy.
+- **AssignRole bypass closed** (FIXED 2026-06-12): The `actorRoles is { Count: > 0 }` bypass that allowed null or empty `actorRoles` to skip the superadmin creation gate has been removed. The guard now explicitly throws `LastSuperadminGuardException` when `actorRoles` is null or empty and the target role is superadmin. Bootstrap/seed scenarios must provide the superadmin role explicitly.
+
 ---
 
-## Verification Results
+## Slice 4 Review Fixes (2026-06-12)
+
+### Fix round 1 — Deactivate guard, MarkDeleted functional blocking, AssignRole bypass
+Three critical findings resolved:
+
+| # | Finding | Fix | Tests added |
+|---|---------|-----|-------------|
+| 1 | **Deactivate lacks last-superadmin guard** — It was possible to deactivate the only active superadmin. | Added `activeSuperadmins` parameter to `Deactivate()`; guard throws `LastSuperadminGuardException` when user is the only active superadmin. | `Deactivate_LastActiveSuperadmin_ThrowsLastSuperadminGuardException`, `Deactivate_Superadmin_WhenOtherActiveSuperadminExists_Succeeds`, `Deactivate_NonSuperadmin_WithSelfInSuperadmins_Succeeds`, `Deactivate_AlreadyInactiveSuperadmin_Succeeds`, `Deactivate_WithNullActiveSuperadmins_ThrowsArgumentNullException` (5 tests) |
+| 2 | **MarkDeleted unguarded, no functional blocking** — `User.MarkDeleted()` (inherited from `AuditableEntity`) did not set `IsActive=false`, leaving soft-deleted users functionally unblocked. No superadmin guard on soft-delete. | Overrode `MarkDeleted()` to set `IsActive = false` + call `base.MarkDeleted()`. Polymorphic: cast to `AuditableEntity` still triggers the override. Superadmin guard deferred to `Deactivate()` (the primary lifecycle operation). | `MarkDeleted_OnUser_SetsDeletedAtAndDeletedByAndBlocksAuth` (updated), `MarkDeleted_OnAlreadyInactiveUser_StaysInactive`, `MarkDeleted_ViaAuditableEntityReference_OnActiveUser_BlocksAuth` (3 tests) |
+| 3 | **AssignRole bypass** — Null/empty `actorRoles` skipped the superadmin creation gate, documented as "for seeding/bootstrap". | Guard now throws when `actorRoles` is null or empty AND the target role is superadmin. Bootstrap must provide superadmin role explicitly. | `AssignRole_SuperadminRole_WithNullActorRoles_ThrowsLastSuperadminGuardException`, `AssignRole_SuperadminRole_WithEmptyActorRoles_ThrowsLastSuperadminGuardException` (2 tests) |
+
+### Fix round 2 — Soft-delete superadmin guard (2026-06-12)
+
+The fix-1 MarkDeleted override was **incomplete**: `MarkDeleted` remained `public virtual` on `AuditableEntity`, meaning any external caller could soft-delete the only active Superadmin by calling `user.MarkDeleted(...)` directly — the guard was only on `Deactivate()`, not on the soft-delete path.
+
+| # | Finding | Fix | Tests added |
+|---|---------|-----|-------------|
+| 4 | **MarkDeleted still bypasses last-superadmin guard** — `User.MarkDeleted()` (public override) had no superadmin guard. External callers could soft-delete the only active Superadmin via `user.MarkDeleted(...)` or `((AuditableEntity)user).MarkDeleted(...)`. | **Architectural fix**: Made `AuditableEntity.MarkDeleted` `protected virtual` (was `public virtual`). External callers cannot call it at all. `User` now exposes `Delete(IReadOnlyCollection<User> activeSuperadmins, string deletedBy, IClock clock)` which enforces the last-active-superadmin guard before calling `protected MarkDeleted`. `Role` exposes `Delete(string deletedBy, IClock clock)` routing through its existing `IsSystem` guard. `Permission` intentionally has no `Delete` method (hard-delete only per design). | `Delete_LastActiveSuperadmin_ThrowsLastSuperadminGuardException` (state preserved), `Delete_Superadmin_WhenOtherActiveSuperadminExists_SucceedsAndBlocksAuth`, `Delete_WithNullActiveSuperadmins_ThrowsArgumentNullException`, `MarkDeleted_IsProtected_NotCallableExternally` (reflection verifies API shape), updated all existing MarkDeleted→Delete call sites in UserTests (3 tests), RoleTests (3 tests), AuditableEntityTests (1 test). Total: 6 new/updated tests. |
+
+All fixes remain BCL-only, persistence-free, and within Slice 4 scope. No external packages or EF Core references introduced.
+
+---
+
+## Verification Results (Slice 4 + Review Fixes round 2)
+- **Build**: ✅ 0 errors, 0 warnings
+- **UnitTests**: ✅ 192/192 passed (189 prior + 3 new soft-delete guard tests)
+- **IntegrationTests**: ✅ 2/2 passed (pre-existing, unaffected)
+- **ApplicationTests**: No tests (empty project, expected)
+- **Domain.csproj**: ✅ Zero package references (BCL-only)
+- **DateTimeOffset usage**: ✅ Confirmed — no `DateTime` types anywhere in new Domain code
+- **Spec scenario coverage**: ✅ All 5 User/UserRole spec scenarios covered + 9 regression tests + 6 soft-delete guard tests
+- **Targeted test run (User + UserRole + Role + AuditableEntity tests)**: ✅ 65/65 passed
+- **MarkDeleted API shape**: ✅ Protected — external bypass impossible; reflection test confirms no public MarkDeleted on AuditableEntity, User, or Role
+- **Role system-role guard regression**: ✅ Still passes via `Delete()` → `protected override MarkDeleted` → `IsSystem` check → `SystemRoleProtectedException`
+
+### Previous Verification
 - **Build**: ✅ 0 errors, 0 warnings
 - **UnitTests**: ✅ 149/149 passed (122 Slice 1+2 + 26 Slice 3 + 1 review fix regression)
 - **IntegrationTests**: ✅ 2/2 passed (pre-existing, unaffected)
@@ -158,7 +227,6 @@ Slice 3 exceeded the 400-line review budget (~500 lines of new source + tests + 
 
 ---
 
-## Remaining Tasks (Slice 4-6)
-- [ ] 4.1-4.4 User & UserRole + superadmin guards
+## Remaining Tasks (Slice 5-6)
 - [ ] 5.1-5.3 RefreshToken & MenuItem
 - [ ] 6.1-6.3 Final Pass
