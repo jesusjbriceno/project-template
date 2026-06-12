@@ -98,9 +98,10 @@ Deletion dimensions SHALL be independent per entity (not synonyms): `softDeleteE
 
 ### Requirement: Audit Fields
 
-All entities SHALL carry DateTimeOffset audit fields: CreatedAt, CreatedBy, UpdatedAt, UpdatedBy, DeletedAt, DeletedBy. DateTimeOffset MUST be used (never DateTime).
+Full lifecycle entities SHALL carry DateTimeOffset audit fields: CreatedAt, CreatedBy, UpdatedAt, UpdatedBy, DeletedAt, DeletedBy. Association/junction entities (RolePermission, UserRole) carry assignment-specific audit fields (AssignedAt, AssignedBy) instead, since they do not have independent create/update/delete lifecycle — they exist only while the association is active. DateTimeOffset MUST be used (never DateTime).
 
 #### Scenario: Audit tracking
 
-- New entity: CreatedAt and UpdatedAt set to current DateTimeOffset
-- Modified entity: UpdatedAt and UpdatedBy reflect the change
+- New lifecycle entity: CreatedAt and UpdatedAt set to current DateTimeOffset
+- Modified lifecycle entity: UpdatedAt and UpdatedBy reflect the change
+- Association/junction entity (RolePermission, UserRole): AssignedAt and AssignedBy recorded at assignment time
