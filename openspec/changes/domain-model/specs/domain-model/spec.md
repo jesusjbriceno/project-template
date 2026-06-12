@@ -8,7 +8,7 @@ Core Domain entities, value objects, invariants, and testable behavior for ident
 
 ### Requirement: Value Objects (Email, PermissionKey)
 
-Email MUST validate RFC 5322, normalize domain to lowercase, and use value-based equality. PermissionKey MUST use lowercase `action.resource` format (dot-separated, no spaces). Both SHALL reject null/empty/whitespace.
+Email MUST validate RFC 5322 pragmatically, normalize to lowercase, and use value-based equality. PermissionKey MUST use exactly two lowercase dot-separated segments (`action.resource`). Both SHALL reject null/empty/whitespace.
 
 #### Scenario: Email normalization and equality
 
