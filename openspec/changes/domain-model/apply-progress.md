@@ -1,11 +1,11 @@
-# Apply Progress: Domain Model — Slice 1 + Slice 2 + Slice 3 + Slice 4 + Slice 5
+# Apply Progress: Domain Model — Slice 1 + Slice 2 + Slice 3 + Slice 4 + Slice 5 + Slice 6
 
-**Branches**: `feature/domain-model-02-value-objects` (Slices 1-2), `feature/domain-model-03-rbac-core` (Slice 3), `feature/domain-model-04-users` (Slice 4), `feature/domain-model-05-tokens-menu` (Slice 5)
+**Branches**: `feature/domain-model-02-value-objects` (Slices 1-2), `feature/domain-model-03-rbac-core` (Slice 3), `feature/domain-model-04-users` (Slice 4), `feature/domain-model-05-tokens-menu` (Slice 5), `feature/domain-model-06-final-pass` (Slice 6)
 **Base**: `develop`
 **Date**: 2026-06-14
-**Mode**: Strict TDD
-**Slices completed**: 1 (ID primitives + domain errors), 2 (Value objects, policies, clock, auditable base), 3 (Core RBAC: Permission, Role, RolePermission), 4 (User + UserRole + superadmin guards incl. soft-delete guard), 5 (RefreshToken + MenuItem)
-**Status**: Slice 5 implemented + fresh review fixes applied. 23/26 tasks complete. Slice 6 (Final Pass) pending.
+**Mode**: Strict TDD (Slices 1-5), Verification-only (Slice 6)
+**Slices completed**: 1-6 (all)
+**Status**: ✅ 26/26 tasks complete. Full verification passed. Ready for sdd-verify + sdd-archive.
 
 ---
 
@@ -293,7 +293,79 @@ All existing tests updated to use valid 64-char SHA-256 hex constants:
 
 ---
 
-## Remaining Tasks (Slice 6)
-- [ ] 6.1 Run `dotnet test apps/api` — all domain unit tests green
-- [ ] 6.2 Verify Domain project has zero EF Core/ASP.NET/UI package dependencies
-- [ ] 6.3 Verify all spec scenarios have at least one covering test
+---
+
+## Slice 6: Final Pass (2026-06-14)
+
+**Branch**: `feature/domain-model-06-final-pass`
+**Base**: `feature/domain-model-05-tokens-menu`
+**Mode**: Verification-only (no new code written)
+
+### Task 6.1 — Full Test Suite ✅
+
+```
+$ dotnet test apps/api --no-restore --verbosity minimal
+
+UnitTests:      239 passed, 0 failed, 0 skipped  (279 ms)
+IntegrationTests: 2 passed, 0 failed, 0 skipped  (425 ms)
+ApplicationTests: No tests (empty project, expected)
+──────────────────────────────────────────────────
+Total:          241 passed, 0 failed, 0 skipped
+```
+
+- **Build**: ✅ 0 errors, 0 warnings
+- **Target framework**: net10.0
+- **Test runner**: xUnit v2.9.3
+
+### Task 6.2 — Domain BCL-Only Verification ✅
+
+`Project.Domain.csproj` inspected — zero `<PackageReference>` elements. Contents:
+- SDK: `Microsoft.NET.Sdk`
+- TargetFramework: `net10.0`
+- `ImplicitUsings: enable`, `Nullable: enable`
+- No EF Core, ASP.NET Core, UI packages, or any third-party dependencies
+- No project references to other layers
+
+✅ Confirmed: Domain remains BCL-only, persistence/API independent.
+
+### Task 6.3 — Spec Scenario Coverage Matrix ✅
+
+All 14 spec scenarios from `specs/domain-model/spec.md` mapped to covering tests:
+
+| # | Requirement | Scenario | Covering Test File(s) | Tests |
+|---|-------------|----------|----------------------|-------|
+| 1 | Value Objects — Email | Normalization to lowercase, value equality | `EmailTests.cs` | 22 |
+| 2 | Value Objects — PermissionKey | `action.resource` format, uppercase rejection | `PermissionKeyTests.cs` | 31 |
+| 3 | User Lifecycle | Creation (IsActive, audit, stamp), deactivation | `UserTests.cs` | — |
+| 4 | User — Soft-delete block | IsActive=false → IsBlocked=true | `UserTests.cs` | — |
+| 5 | Superadmin — Last guard | Deactivation/removal with 1 superadmin throws | `UserTests.cs` | — |
+| 6 | Superadmin — Creation gate | Non-superadmin assigning superadmin throws | `UserTests.cs` | — |
+| 7 | RBAC — System role protection | IsSystem=true deletion throws | `RoleTests.cs` | 15 |
+| 8 | RBAC — Permission copy | CopyPermissionsTo is point-in-time, no propagation | `RoleTests.cs` | — |
+| 9 | RBAC — UserRole assignment | Assign() records AssignedAt/AssignedBy | `UserRoleTests.cs` | 5 |
+| 10 | RefreshToken — Rotation | Rotate() revokes predecessor, sets ReplacedByTokenHash | `RefreshTokenTests.cs` | 31 |
+| 11 | RefreshToken — Reuse detection | Revoked token presented again → family revocation signal | `RefreshTokenTests.cs` | — |
+| 12 | MenuItem — Hierarchy/cycles | SetParent() walks ancestors, throws on self-reference | `MenuItemTests.cs` | 16 |
+| 13 | Deletion Policy — Per-entity | User/RefreshToken/Role/MenuItem/Permission defaults | `DeletionPolicyTests.cs` | 10 |
+| 14 | Audit Fields | CreatedAt/UpdatedAt on lifecycle; AssignedAt/By on junctions | `AuditableEntityTests.cs`, `UserRoleTests.cs`, `RolePermissionTests.cs` | 6+5+5 |
+| — | IDs + Domain Errors | ID factories/equality/guards; exception hierarchy | `IdTests.cs`, `DomainExceptionTests.cs` | 34+19 |
+| — | RBAC — Permission entity | Create with PermissionKey, audit, policy | `PermissionTests.cs` | 6 |
+
+**Coverage summary**: 14/14 spec scenarios have ≥1 covering test. 0 gaps found.
+
+### No Deviations
+
+Slice 6 is verification-only. No code was changed. No new files created.
+
+### No Issues Found
+
+- All tests pass clean
+- Domain.csproj has zero package dependencies
+- All spec scenarios are covered by at least one test
+- No DateTime types used (DateTimeOffset only)
+- No new warnings or errors introduced
+
+---
+
+## Remaining Tasks
+- None — all 26/26 tasks complete. Ready for `sdd-verify` and `sdd-archive`.

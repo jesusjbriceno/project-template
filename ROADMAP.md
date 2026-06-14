@@ -9,7 +9,7 @@ This roadmap tracks the implementation state of the base project. It is updated 
 | Repository scaffold | ✅ Done | Initial monorepo, Docker, API health endpoint, OpenSpec, AGENTS.md, README.md. |
 | Git Flow | ✅ Active | Work is organized in feature branches from `develop`; releases will be promoted to `main`. |
 | Domain model planning | ✅ Done | Proposal, spec, design, tasks, and apply progress exist under `openspec/changes/domain-model/`. |
-| Domain model implementation | 🟡 In progress | Slices 1–4 merged to `develop`; Slice 5 implemented on `feature/domain-model-05-tokens-menu`. |
+| Domain model implementation | ✅ Done | All 6 slices complete. 26/26 tasks done. 241 tests green. BCL-only verified. Ready for verify/archive. |
 
 ## Domain Model Slices
 
@@ -19,17 +19,17 @@ This roadmap tracks the implementation state of the base project. It is updated 
 | 2. Value objects + policies | `feature/domain-model-02-value-objects` | ✅ Merged to `develop` | `Email`, `PermissionKey`, `DeletionPolicy`, `IClock`, `SystemClock`, `AuditableEntity`. | Validation gaps fixed; unit/integration tests passed; fresh review passed. |
 | 3. RBAC core | `feature/domain-model-03-rbac-core` | ✅ Merged to `develop` | `Permission`, `Role`, `RolePermission`, role permission copy, system-role deletion guard. | Bypass fixed with `virtual`/`override`; unit/integration tests passed; fresh review passed. |
 | 4. Users + Superadmin guards | `feature/domain-model-04-users` | ✅ Merged to `develop` | `User`, `UserRole`, Superadmin assignment/removal/deactivation/delete guards. |
-| 5. Tokens + menu | `feature/domain-model-05-tokens-menu` | 🟡 In progress | `RefreshToken`, `MenuItem`. Rotation/reuse detection/cycle guards implemented. 47 targeted tests. |
-| 6. Final pass | TBD | ⬜ Pending | Final domain review, cleanup, docs alignment, full verification. | Not started. |
+| 5. Tokens + menu | `feature/domain-model-05-tokens-menu` | ✅ Done | `RefreshToken`, `MenuItem`. Rotation/reuse detection/cycle guards implemented. 47 targeted tests. |
+| 6. Final pass | `feature/domain-model-06-final-pass` | ✅ Done | Full verification: 241 tests green, BCL-only confirmed, 14/14 spec scenarios covered. | Unit 239 + Integration 2 = 241 passed. |
 
 ## Immediate Next Actions
 
 1. ✅ Slice 4 soft-delete superadmin guard fixed and merged to `develop`.
 2. ✅ Slice 5 RefreshToken + MenuItem implemented on `feature/domain-model-05-tokens-menu`.
-3. Re-run fresh review for Slice 5 after documentation alignment.
-4. Commit Slice 5 only when review passes.
-5. Merge Slice 5 into `develop`.
-6. Execute Slice 6 (Final Pass) — full verification, spec coverage check, cleanup.
+3. ✅ Slice 5 fresh review fixes applied (5 findings: SHA-256 enforcement, expired rotate guard, reuse detection, mutation order, Guid.Empty familyId).
+4. ✅ Slice 6 final pass completed: 241 tests green, BCL-only verified, 14/14 spec scenarios covered.
+5. Next: Run `sdd-verify` to confirm full compliance, then `sdd-archive` to sync delta specs.
+6. Merge completed slices to `develop` after verification.
 7. Mark domain-model change complete.
 
 ## Backlog by Phase
