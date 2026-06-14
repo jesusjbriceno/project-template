@@ -9,7 +9,7 @@ This roadmap tracks the implementation state of the base project. It is updated 
 | Repository scaffold | ✅ Done | Initial monorepo, Docker, API health endpoint, OpenSpec, AGENTS.md, README.md. |
 | Git Flow | ✅ Active | Work is organized in feature branches from `develop`; releases will be promoted to `main`. |
 | Domain model planning | ✅ Done | Proposal, spec, design, tasks, and apply progress exist under `openspec/changes/domain-model/`. |
-| Domain model implementation | 🟡 In progress | Slices 1–3 merged to `develop`; Slice 4 soft-delete superadmin guard implemented, pending fresh review. |
+| Domain model implementation | 🟡 In progress | Slices 1–4 merged to `develop`; Slice 5 implemented on `feature/domain-model-05-tokens-menu`. |
 
 ## Domain Model Slices
 
@@ -18,19 +18,19 @@ This roadmap tracks the implementation state of the base project. It is updated 
 | 1. IDs + domain errors | `feature/domain-model-01-ids-errors` | ✅ Merged to `develop` | Strongly typed ID value objects and domain exception hierarchy. | Unit/integration tests passed; fresh review passed. |
 | 2. Value objects + policies | `feature/domain-model-02-value-objects` | ✅ Merged to `develop` | `Email`, `PermissionKey`, `DeletionPolicy`, `IClock`, `SystemClock`, `AuditableEntity`. | Validation gaps fixed; unit/integration tests passed; fresh review passed. |
 | 3. RBAC core | `feature/domain-model-03-rbac-core` | ✅ Merged to `develop` | `Permission`, `Role`, `RolePermission`, role permission copy, system-role deletion guard. | Bypass fixed with `virtual`/`override`; unit/integration tests passed; fresh review passed. |
-| 4. Users + Superadmin guards | `feature/domain-model-04-users` | 🟡 In progress — soft-delete guard fixed | `User`, `UserRole`, Superadmin assignment/removal/deactivation/delete guards. | Soft-delete guard implemented: `MarkDeleted` → `protected` + `User.Delete(activeSuperadmins)` with last-superadmin guard. Pending fresh review. |
-| 5. Tokens + menu | `feature/domain-model-05-tokens-menu` | ⬜ Pending | `RefreshToken`, rotation/reuse detection, `MenuItem` hierarchy and cycle guards. | Not started. |
+| 4. Users + Superadmin guards | `feature/domain-model-04-users` | ✅ Merged to `develop` | `User`, `UserRole`, Superadmin assignment/removal/deactivation/delete guards. |
+| 5. Tokens + menu | `feature/domain-model-05-tokens-menu` | 🟡 In progress | `RefreshToken`, `MenuItem`. Rotation/reuse detection/cycle guards implemented. 47 targeted tests. |
 | 6. Final pass | TBD | ⬜ Pending | Final domain review, cleanup, docs alignment, full verification. | Not started. |
 
 ## Immediate Next Actions
 
-1. ~~Fix Slice 4 blocker: `User.MarkDeleted()` must not soft-delete the only active Superadmin.~~ ✅ Done — `AuditableEntity.MarkDeleted` is now `protected`; `User.Delete(activeSuperadmins, ...)` enforces last-superadmin guard.
-2. ~~Add regression tests for the soft-delete path.~~ ✅ Done — 3 new tests + API shape reflection test.
-3. ~~Update `openspec/changes/domain-model/apply-progress.md` after the fix.~~ ✅ Done.
-4. Run full build/tests and fresh review.
-5. Commit Slice 4 only when review passes.
-6. Merge Slice 4 into `develop`.
-7. Create `feature/domain-model-05-tokens-menu`.
+1. ✅ Slice 4 soft-delete superadmin guard fixed and merged to `develop`.
+2. ✅ Slice 5 RefreshToken + MenuItem implemented on `feature/domain-model-05-tokens-menu`.
+3. Re-run fresh review for Slice 5 after documentation alignment.
+4. Commit Slice 5 only when review passes.
+5. Merge Slice 5 into `develop`.
+6. Execute Slice 6 (Final Pass) — full verification, spec coverage check, cleanup.
+7. Mark domain-model change complete.
 
 ## Backlog by Phase
 
@@ -39,9 +39,9 @@ This roadmap tracks the implementation state of the base project. It is updated 
 - ✅ Strongly typed IDs and exception hierarchy.
 - ✅ Value objects and common domain foundations.
 - ✅ RBAC core entities.
-- 🔴 Finish User/Superadmin lifecycle invariants.
-- ⬜ Implement refresh token domain model.
-- ⬜ Implement menu item hierarchy domain model.
+- ✅ Finish User/Superadmin lifecycle invariants.
+- ✅ Implement refresh token domain model.
+- ✅ Implement menu item hierarchy domain model.
 
 ### Backend Application
 

@@ -1,11 +1,11 @@
-# Apply Progress: Domain Model — Slice 1 + Slice 2 + Slice 3 + Slice 4
+# Apply Progress: Domain Model — Slice 1 + Slice 2 + Slice 3 + Slice 4 + Slice 5
 
-**Branches**: `feature/domain-model-02-value-objects` (Slices 1-2), `feature/domain-model-03-rbac-core` (Slice 3), `feature/domain-model-04-users` (Slice 4)
+**Branches**: `feature/domain-model-02-value-objects` (Slices 1-2), `feature/domain-model-03-rbac-core` (Slice 3), `feature/domain-model-04-users` (Slice 4), `feature/domain-model-05-tokens-menu` (Slice 5)
 **Base**: `develop`
-**Date**: 2026-06-12
+**Date**: 2026-06-14
 **Mode**: Strict TDD
-**Slices completed**: 1 (ID primitives + domain errors), 2 (Value objects, policies, clock, auditable base), 3 (Core RBAC: Permission, Role, RolePermission), 4 (User + UserRole + superadmin guards incl. soft-delete guard)
-**Status**: Slice 4 soft-delete guard implemented. Ready for fresh review. Slice 5 (RefreshToken + MenuItem) pending.
+**Slices completed**: 1 (ID primitives + domain errors), 2 (Value objects, policies, clock, auditable base), 3 (Core RBAC: Permission, Role, RolePermission), 4 (User + UserRole + superadmin guards incl. soft-delete guard), 5 (RefreshToken + MenuItem)
+**Status**: Slice 5 implemented + fresh review fixes applied. 23/26 tasks complete. Slice 6 (Final Pass) pending.
 
 ---
 
@@ -45,14 +45,30 @@
 | Review | `Entities/UserTests.cs` + `Entities/User.cs` | Unit | ✅ 180/180 | ✅ compile errors (missing guard params, removed bypass) | ✅ 189/189 passed | ✅ 9 cases (deactivate guard, MarkDeleted override + polymorphism, AssignRole bypass) | ➖ Clean |
 | Review-2 | `Entities/UserTests.cs` + `Entities/User.cs` + `Entities/Role.cs` + `Common/AuditableEntity.cs` | Unit | ✅ 189/189 | ✅ compile errors (MarkDeleted protected, Delete method missing) | ✅ 192/192 passed | ✅ 6 cases (3 new: delete last-superadmin guard, delete with other active, null guard; 3 updated: MarkDeleted→Delete regression + protected-reflection test) | ➖ Clean |
 
+### Slice 5 (this batch)
+| Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
+|------|-----------|-------|------------|-----|-------|-------------|----------|
+| 5.1 | `Entities/RefreshTokenTests.cs` | Unit | ✅ 192/192 | ✅ 23 compile errors (RefreshToken class missing) | ✅ 21/21 new passed | ✅ 21 cases (create x4, IsExpired x2, IsRevoked, IsActive x3, IsReuseSignal x2, Rotate x5, rotate-on-revoked, chain x3) | ✅ IClock injection added to factory |
+| 5.2 | Integrated in `RefreshTokenTests.cs` | Unit | ✅ 192/192 | ✅ covered by 5.1 | ✅ included in 5.1 batch | ✅ Chain: T1→T2 reuse signal, T1→T2→T3 triple rotation, reuse throws RefreshTokenReuseSignalException | ➖ Clean |
+| 5.3 | `Entities/MenuItemTests.cs` | Unit | ✅ 213/213 | ✅ 32 compile errors (MenuItem class missing) | ✅ 16/16 new passed | ✅ 16 cases (create x6, defaultPolicy, auditable, setParent x5 with cycles, delete) | ✅ Cycle detection uses Guid walk to avoid implicit operator confusion |
+
+### Slice 5 Fresh Review Fixes (this batch — 2026-06-14)
+| Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
+|------|-----------|-------|------------|-----|-------|-------------|----------|
+| F1 (SHA-256) | `Entities/RefreshTokenTests.cs` | Unit | ✅ 27/27 | ✅ 3 failing: short hash, non-hex, uppercase normalization | ✅ 3/3 fixes passed | ✅ +3 edge: long hash (66), mixed-case, special chars | ➖ Clean |
+| F2 (Expired rotate) | `Entities/RefreshTokenTests.cs` | Unit | ✅ 27/27 | ✅ 1 failing: expired token rotates | ✅ 1/1 fix passed | ✅ +1 boundary: expires exactly at UtcNow | ➖ Clean |
+| F3 (Revoked reuse) | `Entities/RefreshTokenTests.cs` | Unit | ✅ 27/27 | ✅ 2 failing: revoked-without-replacement returns false; Rotate throws InvalidOp not ReuseSignal | ✅ 2/2 fixes passed | N/A (spec single scenario) | ➖ Clean |
+| F4 (Validate first) | `Entities/RefreshTokenTests.cs` | Unit | ✅ 27/27 | ✅ 1 failing: invalid hash still mutates token | ✅ 1/1 fix passed | N/A (single invariants) | ➖ Clean |
+| F5 (Guid.Empty) | `Entities/RefreshTokenTests.cs` | Unit | ✅ 27/27 | ✅ 1 failing: empty FamilyId accepted | ✅ 1/1 fix passed | N/A (single invariant) | ➖ Clean |
+
 ---
 
 ## Test Summary
-- **Total tests written**: 192 (149 prior slices + 31 Slice 4 + 9 review fixes + 3 second-review soft-delete guard)
-- **Total tests passing**: 192
-- **Layers used**: Unit (192)
+- **Total tests written**: 239 (229 prior + 10 fresh review fix tests)
+- **Total tests passing**: 239
+- **Layers used**: Unit (239)
 - **Approval tests** (refactoring): None
-- **Entities created**: 5 (Permission, Role, RolePermission, User, UserRole)
+- **Entities created**: 7 (Permission, Role, RolePermission, User, UserRole, RefreshToken, MenuItem)
 
 ---
 
@@ -86,6 +102,11 @@
 - [x] 4.3 `User.RemoveRole()` with `IReadOnlyCollection<User> activeSuperadmins` guard — last-superadmin-boundary: 0/1/2 active Superadmins; inactive user no-guard; non-superadmin role no-guard (4 tests)
 - [x] 4.4 `User.AssignRole()` superadmin creation gate — `IReadOnlyCollection<Role> actorRoles` parameter; non-superadmin assigning superadmin throws LastSuperadminGuardException; superadmin assigning superadmin succeeds; non-superadmin assigning non-superadmin succeeds (3 tests)
 
+### Slice 5
+- [x] 5.1 `Entities/RefreshToken.cs` — TokenHash, FamilyId, ExpiresAt, CreatedAt, RevokedAt, ReplacedByTokenHash; Create() factory with IClock; Revoke(); Rotate() with reuse detection; IsExpired()/IsRevoked()/IsActive()/IsReuseSignal properties (21 tests: create x4, expiry x2, revoked, active x3, reuseSignal x2, rotate x5, rotate-on-revoked, chain x3)
+- [x] 5.2 RefreshToken chain test — T1→T2→T3 triple rotation, all predecessors replaced, reuse throws RefreshTokenReuseSignalException (3 chain tests integrated in RefreshTokenTests.cs)
+- [x] 5.3 `Entities/MenuItem.cs` — Label, Icon, Route, ParentId, SortOrder, RequiredPermissionKey, RequiredRoleId, IsVisible; extends AuditableEntity; Create() factory; SetParent() with cycle detection walking ancestors via allItems; Delete() method (16 tests: create x6, policy, auditable, setParent x5 with cycle edge cases, delete)
+
 ---
 
 ## Files Changed
@@ -111,6 +132,16 @@
 | `apps/api/tests/Project.UnitTests/Entities/UserRoleTests.cs` | Created | 5 tests: Assign with valid IDs (audit check), composite Id access via UserRoleId, null userId guard, null roleId guard, equality of same UserId+RoleId assignment |
 | `openspec/changes/domain-model/tasks.md` | Modified | Marked 4.1-4.4 as `[x]` |
 | `openspec/changes/domain-model/apply-progress.md` | Modified | Merged Slice 4 TDD evidence, test summary, completed tasks, files changed |
+
+### New in Slice 5
+| File | Action | What Was Done |
+|------|--------|---------------|
+| `apps/api/src/Project.Domain/Entities/RefreshToken.cs` | Created | `sealed class` (not AuditableEntity — security token with own lifecycle). Uses `RefreshTokenId`, `TokenHash` (SHA-256 only), `FamilyId` (raw Guid), `ExpiresAt`, `CreatedAt`, `RevokedAt`, `ReplacedByTokenHash`. `Create()` factory with `IClock`. `IsExpired()`/`IsRevoked`/`IsActive()`/`IsReuseSignal` properties. `Rotate()` with reuse detection (throws `RefreshTokenReuseSignalException`). `Revoke()` for explicit revocation. `DefaultPolicy` = `RefreshTokenDefault`. |
+| `apps/api/src/Project.Domain/Entities/MenuItem.cs` | Created | `sealed class` extending `AuditableEntity`. Uses `MenuItemId`, `Label`, `Icon`, `Route`, `ParentId`, `SortOrder`, `RequiredPermissionKey`, `RequiredRoleId`, `IsVisible`. `Create()` factory with validation. `SetParent()` with cycle detection walking ancestor chain via `allItems` parameter. `Delete()` method. `DefaultPolicy` = `MenuItemDefault`. |
+| `apps/api/tests/Project.UnitTests/Entities/RefreshTokenTests.cs` | Created | 21 tests: Create (valid + null/empty/whitespace tokenHash), IsExpired (past + future), IsRevoked (fresh), IsActive (fresh + expired + revoked), IsReuseSignal (fresh + revoked-without-replacement + after-rotation), Rotate (revokes + sets hash + returns new + new active + reuseSignal), Rotate on already revoked, Chain (T1→T2 signal, T1→T2→T3 triple, reuse throws RefreshTokenReuseSignalException) |
+| `apps/api/tests/Project.UnitTests/Entities/MenuItemTests.cs` | Created | 16 tests: Create (valid minimal + all fields + null/empty/whitespace label + negative sortOrder), DefaultPolicy, AuditableEntity inheritance, SetParent (null root + valid parent + self-reference + direct cycle + 3-level cycle + leaf reassign + root-to-null), Delete |
+| `openspec/changes/domain-model/tasks.md` | Modified | Marked 5.1-5.3 as `[x]` |
+| `openspec/changes/domain-model/apply-progress.md` | Modified | Merged Slice 5 TDD evidence, test summary, completed tasks, files changed |
 
 ### Previous Slices (1-2)
 | File | Action | What Was Done |
@@ -146,6 +177,12 @@
 - **Deactivate now includes last-superadmin guard** (FIXED 2026-06-12): `Deactivate()` accepts `IReadOnlyCollection<User> activeSuperadmins` parameter, matching the pattern in `RemoveRole()`. When the user is active and is the only entry in the active superadmins collection, deactivation throws `LastSuperadminGuardException`. Previously documented as "deferred" — now implemented inline.
 - **MarkDeleted override added on User** (FIXED 2026-06-12, revised 2026-06-12): `User` now overrides `MarkDeleted` (protected override) to set `IsActive = false` before calling `base.MarkDeleted()`. This ensures functional auth blocking (`IsBlocked = true`) via any internal code path. **Revised**: `AuditableEntity.MarkDeleted` is now `protected virtual` (was `public virtual`). External callers must use entity-specific `Delete()` methods that enforce domain invariants — `User.Delete(activeSuperadmins, ...)` for superadmin guard, `Role.Delete(...)` for system-role guard. This prevents polymorphic bypass through `AuditableEntity` references entirely: the API shape makes it impossible to call `MarkDeleted` from outside the entity hierarchy.
 - **AssignRole bypass closed** (FIXED 2026-06-12): The `actorRoles is { Count: > 0 }` bypass that allowed null or empty `actorRoles` to skip the superadmin creation gate has been removed. The guard now explicitly throws `LastSuperadminGuardException` when `actorRoles` is null or empty and the target role is superadmin. Bootstrap/seed scenarios must provide the superadmin role explicitly.
+
+### Slice 5
+- **RefreshToken is not an AuditableEntity**: Design decision #9 treats RefreshToken as a security token with its own lifecycle (`CreatedAt`, `RevokedAt`, `FamilyId`). It does NOT extend `AuditableEntity` because it doesn't have the standard create/update/delete audit fields — it's governed by revocation and expiration, not soft/hard delete. This aligns with `DeletionPolicy.RefreshTokenDefault` (all dimensions false). `CreatedAt` is set via `IClock` injection in the factory for testability.
+- **RefreshToken.Rotate() includes reuse detection inline**: Per the spec "Reuse of a revoked token MUST trigger family/session revocation", `Rotate()` treats any revoked token as a reuse signal and throws `RefreshTokenReuseSignalException` before performing rotation. The Application layer catches this exception to cascade family revocation. The `FamilyId` property (raw `Guid`) is the domain's return signal for Application-layer cascade logic.
+- **MenuItem.SetParent() uses Guid-based cycle walk**: The `MenuItemId` type includes `implicit operator Guid`, which causes C# compiler ambiguity when comparing `MenuItemId? == MenuItemId`. `SetParent()` converts IDs to raw `Guid` values internally via explicit casts and `Equals()` calls to avoid implicit operator confusion during the ancestor chain walk. This is an implementation detail — the public API surface remains typed (`MenuItemId?`).
+- **MenuItem.Delete() is a simple soft-delete**: Hierarchy consistency on deletion (e.g., reassigning children before deleting a parent) is deferred to the Application layer use case. The Domain `Delete()` method only performs soft-delete via `MarkDeleted()`. This keeps Domain persistence-free — the Application layer can pre-validate hierarchy constraints before calling `Delete()`.
 
 ---
 
@@ -225,8 +262,38 @@ No issues found during Slice 3 implementation. All tests passed first time after
 
 Slice 3 exceeded the 400-line review budget (~500 lines of new source + tests + docs). This was driven by the TDD requirement for RBAC core entities (Permission + Role + RolePermission), each needing comprehensive test coverage of invariants, guards, audit, and edge cases. The 400-line target remains aspirational; Slice 3 is accepted as a review exception given that further splitting would produce artificial fragmentation (Role and RolePermission are tightly coupled). Future slices should keep the budget in mind but prioritize correctness over mechanistic line counts.
 
+### Slice 5 Fresh Review Fixes (2026-06-14) — 5 critical findings, all fixed
+
+| # | Finding | Fix | Tests added |
+|---|---------|-----|-------------|
+| 1 | **RefreshToken does not enforce SHA-256 hash-only storage**: `Create()` accepted arbitrary strings (e.g. `"abc123hash"`, `"hash1"`), plaintext, non-hex, and wrong-length values. | Added `ValidateAndNormalizeTokenHash()`: rejects null/empty/whitespace; requires exactly 64 hex chars (0-9, a-f, A-F); normalizes to lowercase (`ToLowerInvariant`) for deterministic storage. | `Create_WithShortTokenHash_ThrowsArgumentException`, `Create_WithNonHexTokenHash_ThrowsArgumentException`, `Create_WithUppercaseHexTokenHash_NormalizesToLowercase`, `Create_WithMixedCaseHexTokenHash_NormalizesToLowercase`, `Create_WithLongTokenHash_ThrowsArgumentException`, `Create_WithSpecialCharsInTokenHash_ThrowsArgumentException` (6 tests) |
+| 2 | **Expired refresh tokens can still be rotated**: `Rotate()` only checked `IsReuseSignal` and `IsRevoked` — expired tokens slipped through. | Added `IsExpired(clock)` check in `Rotate()` before mutation. Throws `InvalidOperationException("Cannot rotate an expired token.")`. | `Rotate_OnExpiredToken_ThrowsInvalidOperationException`, `Rotate_ExpiredTokenAtExactBoundary_ThrowsInvalidOperationException` (2 tests) |
+| 3 | **Revoked-without-replacement token reuse does not trigger family/session revocation**: `IsReuseSignal` required `ReplacedByTokenHash is not null`, meaning admin/logout revoked tokens (`Revoke()` without replacement) were NOT treated as reuse signals. `Rotate()` threw `InvalidOperationException` instead of `RefreshTokenReuseSignalException` for these tokens. | Changed `IsReuseSignal` to simply `IsRevoked` — ANY revoked token is a reuse signal. `Rotate()` now throws `RefreshTokenReuseSignalException` for all revoked tokens (not `InvalidOperationException`). Combined the two checks into a single `if (IsRevoked)` guard. | `IsReuseSignal_RevokedWithoutReplacement_ReturnsTrue` (behavior change: false→true), `Rotate_OnRevokedWithoutReplacementToken_ThrowsRefreshTokenReuseSignalException` (exception type change: InvalidOp→ReuseSignal) (2 test changes) |
+| 4 | **Rotate mutates current token before validating replacement hash**: `RevokedAt` and `ReplacedByTokenHash` were set BEFORE calling `Create(newTokenHash, ...)`. If `Create` threw (invalid hash), the current token was left in a corrupted state (revoked with invalid replacement). | Moved `Create(newTokenHash, ...)` call BEFORE state mutation. The replacement token is fully validated and created first; only then does `this` get mutated. `ReplacedByTokenHash` uses `newToken.TokenHash` (the normalized form from `Create`). | `Rotate_WithInvalidNewTokenHash_DoesNotMutateCurrentToken` (1 test) |
+| 5 | **FamilyId must reject Guid.Empty**: `Create()` did not validate `familyId` against `Guid.Empty`. | Added `if (familyId == Guid.Empty) throw new ArgumentException(...)` in `Create()`. | `Create_WithEmptyFamilyId_ThrowsArgumentException` (1 test) |
+
+All fixes remain BCL-only, persistence-free, and within Slice 5 scope. The existing `RefreshToken.cs` hash constants in tests were migrated from short strings (`"hash1"`, `"abc123hash"`) to real 64-char SHA-256 hex hashes. `MenuItem` was not changed.
+
+#### Test hash migration
+All existing tests updated to use valid 64-char SHA-256 hex constants:
+- `Hash1` = SHA256("")  = `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- `Hash2` = SHA256("a") = `ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb`
+- `Hash3` = SHA256("b") = `3e23e8160039594a33894f6564e1b1348bbd7a0088d42c4acb73eeaed59c009d`
+
+#### Verification Results (Fresh Review Fixes)
+- **Build**: ✅ 0 errors, 0 warnings
+- **UnitTests**: ✅ 239/239 passed (229 prior + 10 new fix tests)
+- **IntegrationTests**: ✅ 2/2 passed (unaffected)
+- **Domain.csproj**: ✅ Zero package references (BCL-only)
+- **DateTimeOffset usage**: ✅ Confirmed — no `DateTime` types
+- **MenuItem**: ✅ Unchanged — no compilation issues
+- **RefreshToken targeted tests**: ✅ 31/31 passed (21 original + 10 new)
+- **Slice 5 targeted tests**: ✅ 47/47 passed (`RefreshTokenTests` 31 + `MenuItemTests` 16)
+- **Full regression**: ✅ All 239 unit tests green
+
 ---
 
-## Remaining Tasks (Slice 5-6)
-- [ ] 5.1-5.3 RefreshToken & MenuItem
-- [ ] 6.1-6.3 Final Pass
+## Remaining Tasks (Slice 6)
+- [ ] 6.1 Run `dotnet test apps/api` — all domain unit tests green
+- [ ] 6.2 Verify Domain project has zero EF Core/ASP.NET/UI package dependencies
+- [ ] 6.3 Verify all spec scenarios have at least one covering test

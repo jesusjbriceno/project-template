@@ -85,7 +85,7 @@ MenuItem SHALL support parent-child hierarchy via ParentId with SortOrder. Visib
 
 #### Scenario: Hierarchy and cycle prevention
 
-- GIVEN A→B→C chain → C.ParentId=B valid; C.ParentId=A triggers cycle violation
+- GIVEN A→B→C chain → C.ParentId=B valid; A.ParentId=C triggers cycle violation
 
 ### Requirement: Deletion Policy Dimensions
 

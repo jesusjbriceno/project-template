@@ -62,9 +62,9 @@ Chain strategy: feature-branch-chain
 
 ## Phase 5: RefreshToken + MenuItem
 
-- [ ] 5.1 (RED→GREEN) `Entities/RefreshToken.cs` — `TokenHash`, `FamilyId`, `ExpiresAt`, `Rotate()`, `IsExpired()`, `IsRevoked()`, `IsActive()`, `IsReuseSignal()`; rotation + reuse detection tests
-- [ ] 5.2 Write RefreshToken chain test: T1→T2→T3, assert T1.IsReuseSignal() after T2 rotates
-- [ ] 5.3 (RED→GREEN) `Entities/MenuItem.cs` — `Label`, `Icon`, `Route`, `ParentId`, `SortOrder`, `RequiredPermissionKey`, `RequiredRoleId`, `IsVisible`, `SetParent()` cycle guard; hierarchy + cycle tests
+- [x] 5.1 (RED→GREEN) `Entities/RefreshToken.cs` — `TokenHash`, `FamilyId`, `ExpiresAt`, `Rotate()`, `IsExpired()`, `IsRevoked()`, `IsActive()`, `IsReuseSignal()`; rotation + reuse detection tests
+- [x] 5.2 Write RefreshToken chain test: T1→T2→T3, assert T1.IsReuseSignal() after T2 rotates
+- [x] 5.3 (RED→GREEN) `Entities/MenuItem.cs` — `Label`, `Icon`, `Route`, `ParentId`, `SortOrder`, `RequiredPermissionKey`, `RequiredRoleId`, `IsVisible`, `SetParent()` cycle guard; hierarchy + cycle tests
 
 ## Phase 6: Final Pass
 
