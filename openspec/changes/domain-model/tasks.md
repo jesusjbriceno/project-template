@@ -68,6 +68,6 @@ Chain strategy: feature-branch-chain
 
 ## Phase 6: Final Pass
 
-- [ ] 6.1 Run `dotnet test apps/api` — all domain unit tests green
-- [ ] 6.2 Verify Domain project has zero EF Core/ASP.NET/UI package dependencies
-- [ ] 6.3 Verify all spec scenarios have at least one covering test
+- [x] 6.1 Run `dotnet test apps/api` — all domain unit tests green
+- [x] 6.2 Verify Domain project has zero EF Core/ASP.NET/UI package dependencies
+- [x] 6.3 Verify all spec scenarios have at least one covering test
