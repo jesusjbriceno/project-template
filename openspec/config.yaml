@@ -2,36 +2,39 @@
 schema: spec-driven
 
 context: |
-  Monorepo: apps/api/, apps/web/, packages/
+  Monorepo: apps/api/, apps/web/, packages/contracts/
   Backend: .NET 10, ASP.NET Core, Clean Architecture + CQRS + Result pattern
   Frontend: React + TypeScript + Tailwind + pnpm (placeholder until Phase 9)
-  Persistence: EF Core + PostgreSQL (EF Core only in Infrastructure layer)
+  Persistence: EF Core 10 + PostgreSQL 17 (EF Core only in Infrastructure layer)
   Auth: JWT access + refresh token rotation, RBAC
   Frontend state: Zustand, validation: Zod, router: TanStack Router
   Delivery: Docker Compose
-  Quality: TDD mandatory, OWASP Top Ten, SonarAnalyzer.CSharp
+  Quality: TDD mandatory, OWASP Top Ten, SonarAnalyzer.CSharp, coverlet coverage
+  Domain model: ✅ Complete & archived (241 tests, BCL-only verified)
+  Application layer: ✅ Complete & archived (308 tests)
+  SonarQube: CI pipeline passing on develop (SonarScanner for .NET v8+)
 
 strict_tdd: true
 
 testing:
   strict_tdd_mode: true
-  detected: "2026-06-12"
+  detected: "2026-06-15"
   test_runner:
-    command: "dotnet test"
-    framework: "xUnit v2.9.3"
+    command: "dotnet test apps/api"
+    framework: "xUnit v2.9.3 + Microsoft.NET.Test.Sdk v17.14.1"
   test_layers:
     unit:
       available: true
       project: Project.UnitTests
-      tool: "xUnit + coverlet"
-    integration:
-      available: true
-      project: Project.IntegrationTests
-      tool: "xUnit + WebApplicationFactory + Testcontainers"
+      tool: "xUnit + coverlet.collector 6.0.4"
     application:
       available: true
       project: Project.ApplicationTests
-      tool: "xUnit + coverlet"
+      tool: "xUnit + coverlet.collector 6.0.4"
+    integration:
+      available: true
+      project: Project.IntegrationTests
+      tool: "xUnit + WebApplicationFactory 10.0.9 + Testcontainers"
     e2e:
       available: false
       tool: null
@@ -42,11 +45,11 @@ testing:
   quality_tools:
     linter:
       available: true
-      tool: "SonarAnalyzer.CSharp"
+      tool: "SonarAnalyzer.CSharp + xunit.analyzers 1.27.0"
       command: "dotnet build /p:RunAnalyzersDuringBuild=true"
     type_checker:
       available: true
-      tool: ".NET nullable analysis"
+      tool: ".NET nullable analysis (nullable: enable)"
       command: "dotnet build"
     formatter:
       available: false
@@ -69,7 +72,8 @@ rules:
     - Keep tasks completable in one session
     - One commit per task with Conventional Commits
   apply:
-    - Follow existing code patterns from AGENTS.md
+    instructions:
+      - Follow existing code patterns from AGENTS.md
     tdd: true
     test_command: "dotnet test apps/api"
   verify:
