@@ -2,8 +2,8 @@
 
 **Change**: infrastructure-ef-core
 **Date**: 2026-06-15 (original), split 2-way 2026-06-15, split 3-way 2026-06-15
-**Phase**: 1a — Typed ID Converters & Comparers (PR 1a)
-**Status**: READY FOR REVIEW (PR 1a)
+**Phase**: 1b — Value-Object Converters + Domain EF Materialization Prep (PR 1b)
+**Status**: READY FOR REVIEW (PR 1b)
 
 ## Split Rationale
 
@@ -136,7 +136,7 @@ PR 1b files staged in `_pr1b_deferred/`. PR 1c files staged in `_pr1c_deferred/`
 
 ## Remaining Tasks
 
-- [ ] PR 1b: Restore `_pr1b_deferred/` files + implement VO converters and Domain EF prep
+- [x] PR 1b: Restore `_pr1b_deferred/` files + implement VO converters and Domain EF prep ✅
 - [ ] PR 1c: Restore `_pr1c_deferred/` files + implement DbContext core
 - [ ] Phase 2: Foundation Entity Configurations (User/Role/Permission)
 - [ ] Phase 3: Relation Entity Configurations (UserRole/RolePermission/MenuItem/RefreshToken)
@@ -149,3 +149,99 @@ PR 1b files staged in `_pr1b_deferred/`. PR 1c files staged in `_pr1c_deferred/`
 $ dotnet test apps/api/tests/Project.IntegrationTests --filter "LayerIsolationTests|IdConverterTests"
 Total tests: 11 — Passed: 11, Failed: 0, Skipped: 0
 ```
+
+---
+
+## Completed Tasks (PR 1b) — 2026-06-15
+
+| Task | Description | Status |
+|------|-------------|--------|
+| 1b.1 | RESTORE: Move `_pr1b_deferred/` files back to working tree | ✅ |
+| 1b.2 | RED: Write ValueObjectConverterTests (6 test methods) | ✅ |
+| 1b.3 | GREEN: Create EmailConverter | ✅ |
+| 1b.4 | GREEN: Create PermissionKeyConverter | ✅ |
+| 1b.5 | GREEN: Create DeletionPolicyConverter | ✅ |
+| 1b.6 | GREEN: Add private parameterless constructor to User | ✅ |
+| 1b.7 | GREEN: Add private parameterless constructor + private setters to RefreshToken | ✅ |
+| 1b.8 | VERIFY: Run `dotnet test` — all PR 1a + PR 1b tests pass | ✅ |
+
+## TDD Cycle Evidence (PR 1b)
+
+| Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
+|------|-----------|-------|------------|-----|-------|-------------|----------|
+| 1b.2 | `ValueObjectConverterTests.cs` | Unit (in IntegrationTests) | ✅ 319/319 | ✅ Compile failed (CS0246 ×3) | ✅ 3/3 pass | ✅ 6/6 pass (+3 edge cases) | ✅ Clean |
+| 1b.3 | `EmailConverter.cs` | — | N/A (new) | N/A | ✅ All tests pass | See 1b.2 | ✅ Clean |
+| 1b.4 | `PermissionKeyConverter.cs` | — | N/A (new) | N/A | ✅ All tests pass | See 1b.2 | ✅ Clean |
+| 1b.5 | `DeletionPolicyConverter.cs` | — | N/A (new) | N/A | ✅ All tests pass | See 1b.2 | ✅ Clean |
+| 1b.6 | `User.cs` (add private ctor) | — | ✅ 239/239 UnitTests | N/A (structural) | ✅ Build green, all tests green | ➖ Single | ✅ CS8618 pragma |
+| 1b.7 | `RefreshToken.cs` (add private ctor + setters) | — | ✅ 239/239 UnitTests | N/A (structural) | ✅ Build green, all tests green | ➖ Single | ✅ CS8618 pragma, private set |
+
+### Test Summary (PR 1b)
+- **New tests written**: 6 (3 happy path + 3 triangulation/edge cases)
+- **Tests passing**: 325/325 (67 Application + 239 Unit + 19 Integration) via `dotnet test apps/api`
+- **Layers used**: Unit (6, via IntegrationTests project — no database required)
+- **Approval tests**: None — no refactoring tasks
+- **Pure functions created**: 0 (converters are adapter classes, not pure functions)
+
+### Triangulation Details
+
+| Original Test (Happy Path) | Triangulation (Edge/Alt Case) |
+|----------------------------|-------------------------------|
+| `Email_RoundTrip_NormalizesAndPreservesValue` ("User@Example.com" → "user@example.com") | `Email_RoundTrip_TrimsAndLowercasesWhitespacePaddedInput` ("  JOHN@DOMAIN.COM  " → "john@domain.com") |
+| `PermissionKey_RoundTrip_Produces_SameValue` ("users.read") | `PermissionKey_RoundTrip_DifferentSegments_Produces_SameValue` ("admin.create") |
+| `DeletionPolicy_RoundTrip_PreservesFourBooleans` (UserDefault: T,F,F,F) | `DeletionPolicy_RoundTrip_RoleDefault_PreservesThreeTrueBooleans` (RoleDefault: T,T,T,F) |
+
+## Files Changed (PR 1b)
+
+### Created (Infrastructure — 3 converters)
+| File | Lines | Description |
+|------|-------|-------------|
+| `Data/Converters/EmailConverter.cs` | 16 | Email ↔ string via Email.Create normalization |
+| `Data/Converters/PermissionKeyConverter.cs` | 15 | PermissionKey ↔ string |
+| `Data/Converters/DeletionPolicyConverter.cs` | 24 | DeletionPolicy ↔ JSONB via System.Text.Json |
+
+### Created (Tests — 1 file)
+| File | Lines | Description |
+|------|-------|-------------|
+| `Infrastructure/Data/Converters/ValueObjectConverterTests.cs` | 97 | 6 test methods: 3 VO round-trips + 3 triangulation |
+
+### Modified (Domain — 2 files)
+| File | Change | Lines |
+|------|--------|-------|
+| `Domain/Entities/User.cs` | Private parameterless constructor for EF Core materialization | +8 |
+| `Domain/Entities/RefreshToken.cs` | Private parameterless constructor + 5 private setters (Id, TokenHash, FamilyId, ExpiresAt, CreatedAt) | +18 / −5 |
+
+### Modified (SDD — 1 file)
+| File | Change |
+|------|--------|
+| `openspec/changes/infrastructure-ef-core/tasks.md` | Mark 1b.1–1b.8 [x] |
+
+### Lines Changed
+- **New files**: 152 lines (3 converters + 1 test)
+- **Modified files**: +26 / −13 (Domain entities + tasks.md)
+- **Total additions**: ~178 lines
+- **Budget**: Under 400 lines ✅
+
+## PR 1b Verification
+
+```
+$ dotnet test apps/api
+ApplicationTests:  67/67 ✅
+UnitTests:        239/239 ✅
+IntegrationTests:  19/19 ✅ (13 PR1a + 6 PR1b)
+Total:            325/325 ✅
+```
+
+## Deviations from Design (PR 1b)
+
+1. **CS8618 suppression added to RefreshToken**: The private parameterless constructor triggers CS8618 warnings for non-nullable reference types (Id, TokenHash). Added `#pragma warning disable/restore CS8618` matching the pattern already used in User.cs.
+2. **Triangulation expanded beyond deferred test file**: The deferred `ValueObjectConverterTests.cs` had 3 test methods (1 per converter). Strict TDD required triangulation — added 3 more edge/alt case tests (6 total).
+
+## Issues Found (PR 1b)
+
+None. All builds and tests pass clean with zero warnings.
+
+## Deferred Folder State
+
+- `_pr1b_deferred/`: Files successfully restored to working tree. The deferred copies remain as reference artifacts (untracked, not committed).
+- `_pr1c_deferred/`: **Untouched** — remains in safe deferred state for next PR slice. Zero contamination risk.

@@ -40,14 +40,14 @@ Chain strategy: feature-branch-chain
 
 _Requires PR 1a files in working tree. PR 1b files are currently staged in `_pr1b_deferred/`._
 
-- [ ] 1b.1 **RESTORE**: Move `_pr1b_deferred/` files back to working tree
-- [ ] 1b.2 **RED**: Write `ValueObjectConverterTests` — Email normalization, PermissionKey/PermissionKey round-trip, DeletionPolicy 4-bool round-trip
-- [ ] 1b.3 **GREEN**: Create `EmailConverter` — Email ↔ string via Email.Create normalization
-- [ ] 1b.4 **GREEN**: Create `PermissionKeyConverter` — PermissionKey ↔ string
-- [ ] 1b.5 **GREEN**: Create `DeletionPolicyConverter` — DeletionPolicy ↔ string (JSONB via System.Text.Json)
-- [ ] 1b.6 **GREEN**: Add private parameterless constructor to `User` for EF Core materialization
-- [ ] 1b.7 **GREEN**: Add private parameterless constructor + private setters to `RefreshToken` for EF Core materialization
-- [ ] 1b.8 **VERIFY**: Run `dotnet test` — all PR 1a + PR 1b tests pass (no database required)
+- [x] 1b.1 **RESTORE**: Move `_pr1b_deferred/` files back to working tree
+- [x] 1b.2 **RED**: Write `ValueObjectConverterTests` — Email normalization, PermissionKey/PermissionKey round-trip, DeletionPolicy 4-bool round-trip
+- [x] 1b.3 **GREEN**: Create `EmailConverter` — Email ↔ string via Email.Create normalization
+- [x] 1b.4 **GREEN**: Create `PermissionKeyConverter` — PermissionKey ↔ string
+- [x] 1b.5 **GREEN**: Create `DeletionPolicyConverter` — DeletionPolicy ↔ string (JSONB via System.Text.Json)
+- [x] 1b.6 **GREEN**: Add private parameterless constructor to `User` for EF Core materialization
+- [x] 1b.7 **GREEN**: Add private parameterless constructor + private setters to `RefreshToken` for EF Core materialization
+- [x] 1b.8 **VERIFY**: Run `dotnet test` — all PR 1a + PR 1b tests pass (no database required)
 
 ## Phase 1c: DbContext Core Infrastructure (PR 1c) — ~327 lines
 
