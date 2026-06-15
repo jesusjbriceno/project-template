@@ -10,7 +10,7 @@ Foundation slice defines the Application-layer contracts the whole backend obeys
 |---|---|---|---|---|
 | 1 | Result pattern | Custom `Result` + `Result<T>` + `Error` | `FluentResults` / `Ardalis.Result` | Zero deps; ~80 LOC is enough to own. |
 | 2 | CQRS shape | Custom `ICommand`/`IQuery`/`IHandler` only | MediatR now | Explicit DI, no reflection; spec allows deferral. |
-| 3 | Repo granularity | Per-aggregate interfaces | Generic `IRepository<T>` / per-method | Matches aggregates; preserves `GetActiveSuperadminsAsync` semantics. |
+| 3 | Repo granularity | `IBaseRepository<TEntity, TId>` + per-aggregate interfaces inheriting from it | Generic `IRepository<T>` / per-method only | Shared CRUD primitives (GetById, Add, Update, Delete, paged search) on base contract; specific repos add aggregate-only queries. Strongly-typed IDs. |
 | 4 | Security split | `IUserSession` separate from `ISuperadminEnforcementContext` | One session with superadmin methods | Boundary enforced by type system; spec forbids generic-session substitution. |
 | 5 | `ITokenService` | `RevokeFamilyAsync` only | Full token service | App never handles raw tokens; Infra implements with hasher. |
 | 6 | Validation | `IValidated` marker only | Full FluentValidation pipeline now | Pipeline behavior belongs with first use-case slice. |
@@ -35,16 +35,22 @@ Handlers MUST: (1) pre-load `activeSuperadmins`/`actorRoles` via `ISuperadminEnf
 |------|--------|
 | `apps/api/src/Project.Application/Common/{Result,ResultT,Error}.cs` | Create — `Result`, `Result<T>`, `Error` + stable codes. |
 | `apps/api/src/Project.Application/Abstractions/Messaging/ICommand{,Handler}.cs` + `IQuery{,Handler}.cs` | Create — CQRS contract pair. |
-| `apps/api/src/Project.Application/Abstractions/Persistence/I{User,Role,Permission,RefreshToken,MenuItem}Repository.cs` | Create — per-aggregate repos (5 files). |
+| `apps/api/src/Project.Application/Abstractions/Persistence/I{User,Role,Permission,RefreshToken,MenuItem}Repository.cs` | Create — per-aggregate repos inheriting from IBaseRepository (5 files). |
+| `apps/api/src/Project.Application/Abstractions/Persistence/IBaseRepository.cs` | Create — shared base contract with CRUD + paged search. |
+| `apps/api/src/Project.Application/Abstractions/Persistence/PageRequest.cs` | Create — immutable pagination request. |
+| `apps/api/src/Project.Application/Abstractions/Persistence/PagedResult.cs` | Create — immutable paginated result. |
 | `apps/api/src/Project.Application/Abstractions/Security/I{UserSession,SuperadminEnforcementContext,TokenService}.cs` | Create — security boundary. |
 | `apps/api/src/Project.Application/Abstractions/Validation/IValidated.cs` | Create — pipeline marker. |
 | `apps/api/src/Project.Application/GlobalUsings.cs` | Create — shared usings. |
 | `apps/api/tests/Project.ApplicationTests/Common/{Result,Error}Tests.cs` | Create — TDD for `Result`/`Error`. |
 | `apps/api/tests/Project.ApplicationTests/Abstractions/Messaging/CqrsContractTests.cs` | Create — compile-time signature proof. |
-| `apps/api/tests/Project.ApplicationTests/Abstractions/Persistence/RepositoryContractTests.cs` | Create — hand-rolled stubs prove types. |
+| `apps/api/tests/Project.ApplicationTests/Abstractions/Persistence/RepositoryContractTests.cs` | Create — hand-rolled stubs prove per-aggregate repo types and IBaseRepository<TEntity,TId> contract. |
+| `apps/api/tests/Project.ApplicationTests/Abstractions/Persistence/PageRequestTests.cs` | Create — TDD for pagination request immutability and boundary validation. |
+| `apps/api/tests/Project.ApplicationTests/Abstractions/Persistence/PagedResultTests.cs` | Create — TDD for paginated result properties (TotalPages, HasNextPage, HasPreviousPage). |
 | `apps/api/tests/Project.ApplicationTests/Abstractions/Security/SecurityBoundaryTests.cs` | Create — two-interface distinction; no raw-token surface. |
+| `apps/api/tests/Project.ApplicationTests/Abstractions/Validation/ValidationMarkerTests.cs` | Create — IValidated marker assignability and generic constraint contracts. |
 
-**Total: 16 new files (10 src + 6 tests).** No modifications, no deletions.
+**Total: 20 new source files, 8 new test files (28 files).** Minor modifications were required to `ROADMAP.md`, `GlobalUsings.cs`, and OpenSpec artifacts (`design.md`, `tasks.md`, `apply-progress.md`) during implementation. Existing production behavior was not modified or deleted.
 
 ## Interfaces / Contracts
 
@@ -66,6 +72,21 @@ public interface ISuperadminEnforcementContext {
     Task<IReadOnlyCollection<User>> GetActiveSuperadminsAsync(CancellationToken ct);
     Task<IReadOnlyCollection<Role>> GetActorRolesAsync(CancellationToken ct);
 }
+public interface IBaseRepository<TEntity, TId>
+    where TEntity : class where TId : notnull {
+    Task<TEntity?> GetByIdAsync(TId id, CancellationToken ct = default);
+    Task AddAsync(TEntity entity, CancellationToken ct = default);
+    void Update(TEntity entity);
+    void Delete(TEntity entity);
+    Task<PagedResult<TEntity>> GetPagedAsync(PageRequest request, CancellationToken ct = default);
+}
+public sealed record PageRequest(int Page, int PageSize);
+public sealed class PagedResult<T>(IReadOnlyCollection<T> Items, int TotalCount, int Page, int PageSize) {
+    int TotalPages { get; }
+    bool HasNextPage { get; }
+    bool HasPreviousPage { get; }
+}
+// Per-aggregate repos: IUserRepository : IBaseRepository<User, UserId> { ... }
 ```
 
 ## Testing Strategy

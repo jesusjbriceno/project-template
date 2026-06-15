@@ -30,11 +30,22 @@ All operations MUST return `Result` or `Result<T>`. Exceptions SHALL NOT be used
 
 ### Requirement: Repository Interfaces
 
-Per-aggregate interfaces SHALL exist: `IUserRepository`, `IRoleRepository`, `IPermissionRepository`, `IRefreshTokenRepository`, `IMenuItemRepository`. MUST use Domain entity types and strongly-typed IDs. MUST expose async CRUD and invariant pre-loading methods. MUST NOT reference EF Core types or return DTOs.
+A shared `IBaseRepository<TEntity, TId>` SHALL expose common CRUD primitives (`GetByIdAsync`, `AddAsync`, `Update`, `Delete`) and paginated search (`GetPagedAsync`). Per-aggregate interfaces (`IUserRepository`, `IRoleRepository`, `IPermissionRepository`, `IRefreshTokenRepository`, `IMenuItemRepository`) SHALL inherit from the base contract and add only aggregate-specific queries. All repository interfaces MUST use Domain entity types and strongly-typed IDs. MUST NOT reference EF Core, IQueryable, DbContext, or Infrastructure types.
+
+#### Scenario: Base repository contract
+
+- GIVEN `IBaseRepository<TEntity, TId>` → exposes `GetByIdAsync(TId, ct): TEntity?`, `AddAsync(TEntity, ct)`, `Update(TEntity)`, `Delete(TEntity)`, `GetPagedAsync(PageRequest, ct): PagedResult<TEntity>`
+- GIVEN `IUserRepository : IBaseRepository<User, UserId>` → inherits CRUD + paged search; adds `GetByEmailAsync`, `ExistsAsync`, `GetActiveSuperadminsAsync`
+
+#### Scenario: Paginated search without infrastructure leakage
+
+- GIVEN `PageRequest` with Page / PageSize → validated at construction (Page >= 1, 1 <= PageSize <= 100)
+- GIVEN `PagedResult<T>` with Items / TotalCount / TotalPages / HasNextPage / HasPreviousPage → immutable, no IQueryable or Expression
+- GIVEN handler calls `GetPagedAsync(request, ct)` → returns `PagedResult<T>` without leaking EF Core Skip/Take or SQL dialect
 
 #### Scenario: CRUD and invariant pre-loading
 
-- GIVEN `IUserRepository` → exposes `GetByIdAsync(UserId, ct): User?`, `AddAsync(User, ct): void`
+- GIVEN `IUserRepository` → inherits `GetByIdAsync(UserId, ct): User?`, `AddAsync(User, ct)` from base
 - Update/Delete follow Domain lifecycle (deactivate, not physical delete unless allowed)
 - Exposes `GetActiveSuperadminsAsync(ct): IReadOnlyCollection<User>` for enforcement context
 
