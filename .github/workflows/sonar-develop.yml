@@ -55,6 +55,19 @@ jobs:
         shell: bash
         run: echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
 
+      - name: Check SonarQube availability
+        shell: bash
+        env:
+          SONAR_HOST_URL: ${{ vars.SONAR_URL }}
+        run: |
+          curl --fail --show-error --silent --location \
+            --connect-timeout 30 \
+            --max-time 60 \
+            --retry 5 \
+            --retry-delay 10 \
+            --retry-all-errors \
+            "${SONAR_HOST_URL%/}/api/server/version"
+
       - name: SonarScanner begin
         shell: bash
         working-directory: apps/api
@@ -73,6 +86,10 @@ jobs:
             /d:sonar.tests=tests \
             /d:sonar.sourceEncoding=UTF-8 \
             /d:sonar.scanner.scanAll=false \
+            /d:sonar.scanner.connectTimeout=30 \
+            /d:sonar.scanner.socketTimeout=300 \
+            /d:sonar.scanner.responseTimeout=300 \
+            /d:sonar.plugins.download.timeout=300 \
             /d:sonar.qualitygate.wait=true \
             /d:sonar.qualitygate.timeout=300 \
             /d:sonar.exclusions="**/bin/**,**/obj/**,**/TestResults/**,**/coverage/**" \
@@ -124,7 +141,6 @@ jobs:
           echo "Selected coverage report: ${FILES[0]}"
 
       - name: SonarScanner end
-        if: always()
         shell: bash
         working-directory: apps/api
         env:
