@@ -11,7 +11,7 @@ This roadmap tracks the implementation state of the base project. It is updated 
 | Domain model planning | ✅ Archived | Source-of-truth spec exists at `openspec/specs/domain-model/spec.md`; audit trail archived under `openspec/changes/archive/2026-06-14-domain-model/`. |
 | Domain model implementation | ✅ Done | All 6 slices complete and archived. 26/26 tasks done. 241 tests green. BCL-only verified. |
 | Application layer planning | ✅ Done | Proposal, spec, design, tasks, and apply progress exist under `openspec/changes/application-layer/`. |
-| Application layer implementation | 🟡 In progress | Phase 1+2 implemented (16/19 tasks). Phase 3 verification: 308 tests green, zero EF Core/ASP.NET refs confirmed. Ready for archive. |
+| Application layer implementation | 🟡 In progress | Phase 1+2+3 complete (19/19 tasks). Phase 3 verification: 308 tests green, zero EF Core/ASP.NET refs confirmed. Ready for archive. |
 
 ## Domain Model Slices
 

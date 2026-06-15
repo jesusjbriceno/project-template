@@ -356,8 +356,9 @@ public sealed class BaseRepositoryContractTests
 
         await repo.AddAsync(entity, CancellationToken.None);
 
-        // Must not throw — proves signature compiles
-        Assert.True(true); // explicit assertion per TDD rules
+        // Must not throw — proves signature compiles. Assert entity state to confirm
+        // the async call completed without corrupting the passed-in reference.
+        Assert.Equal("test", entity.Name);
     }
 
     [Fact]
@@ -368,8 +369,9 @@ public sealed class BaseRepositoryContractTests
 
         repo.Update(entity);
 
-        // Must not throw — proves void Update signature compiles
-        Assert.True(true);
+        // Must not throw — proves void Update signature compiles. Assert entity state
+        // to confirm the void call completed without corrupting the passed-in reference.
+        Assert.Equal("test", entity.Name);
     }
 
     [Fact]
@@ -380,8 +382,9 @@ public sealed class BaseRepositoryContractTests
 
         repo.Delete(entity);
 
-        // Must not throw — proves void Delete signature compiles
-        Assert.True(true);
+        // Must not throw — proves void Delete signature compiles. Assert entity state
+        // to confirm the void call completed without corrupting the passed-in reference.
+        Assert.Equal("test", entity.Name);
     }
 
     [Fact]

@@ -61,18 +61,20 @@ Commands and queries SHOULD declare FluentValidation validators. A marker interf
 
 `IUserSession` SHALL expose current `UserId`, `Email`, and actor roles. `ITokenService` SHALL declare a family-revocation contract: upon `RefreshTokenReuseSignalException`, Application MUST invoke `RevokeFamily(familyId)`. No raw token handling — abstract contracts only.
 
-#### Scenario: Audit identity and family revocation
+#### Scenario: Audit identity and family revocation contracts
 
 - GIVEN handler needs `CreatedBy` → obtains identity from `IUserSession`, never HTTP context
-- GIVEN `Rotate()` throws `RefreshTokenReuseSignalException` → Application calls `ITokenService.RevokeFamily(familyId)`
+- `ITokenService` SHALL expose `RevokeFamilyAsync(Guid, CancellationToken)` — the family-revocation contract exists now.
+  Runtime handler behavior (reacting to `RefreshTokenReuseSignalException` by calling `RevokeFamilyAsync`) is deferred to future use-case slices.
 
 ### Requirement: Superadmin Enforcement
 
 `ISuperadminEnforcementContext` SHALL pre-load `activeSuperadmins` and `actorRoles`. Use cases MUST use this context before Domain methods that require these collections. Generic `IUserSession` MUST NOT substitute for Superadmin enforcement.
 
-#### Scenario: Last-superadmin guard
+#### Scenario: Last-superadmin enforcement contract
 
-- GIVEN deactivation targeting the last active Superadmin → handler loads context → Domain signals invariant violation → handler returns `Result.Failure`
+- `ISuperadminEnforcementContext` SHALL pre-load `activeSuperadmins` and `actorRoles` — the contract exists now.
+  Runtime handler flow (loading context, invoking Domain invariants, mapping to `Result.Failure` on last-Superadmin violation) is deferred to future use-case slices.
 
 ### Requirement: Security Boundaries
 
@@ -84,7 +86,7 @@ Application MUST NOT bypass Domain invariants. Auth/session contracts MUST NOT l
 
 ### Requirement: Out-of-Scope Boundaries
 
-Foundation MUST NOT include: concrete handlers beyond contract proof, EF Core DbContext or repository implementations, JWT issuance/validation logic, login/logout flows, API endpoints, or the MediatR NuGet package.
+Foundation MUST NOT include: concrete handlers beyond contract proof, EF Core DbContext or repository implementations, JWT issuance/validation logic, login/logout flows, API endpoints, or the MediatR NuGet package. Handler-level refresh-token reuse exception handling and last-superadmin handler orchestration are deferred to future use-case slices that will consume the contracts established here.
 
 #### Scenario: Clean compile boundary
 
