@@ -47,6 +47,6 @@ Chain strategy: feature-branch-chain
 
 ## Phase 3: Verification
 
-- [ ] 3.1 `dotnet build apps/api` — zero EF Core / ASP.NET references in Application project
-- [ ] 3.2 `dotnet test apps/api` — all tests green
-- [ ] 3.3 Update `ROADMAP.md` Backend Application row to "In Progress"
+- [x] 3.1 `dotnet build apps/api` — zero EF Core / ASP.NET references in Application project
+- [x] 3.2 `dotnet test apps/api` — all tests green
+- [x] 3.3 Update `ROADMAP.md` Backend Application row to "In Progress"
