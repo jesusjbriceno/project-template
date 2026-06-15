@@ -1,9 +1,9 @@
 # Apply Progress: Application Layer Foundation
 
 **Change**: application-layer  
-**Date**: 2026-06-14 (updated 2026-06-15)
+**Date**: 2026-06-14 (updated 2026-06-15, Phase 3 final pass 2026-06-15)
 **Mode**: Strict TDD  
-**Status**: Phase 1 + Phase 2 + Architectural Adjustment implementation complete (16/19 tasks). Work Unit 2 fresh review fixes applied (2026-06-15) — documentation inaccuracies corrected, security regression tests hardened with reflection. Ready for re-review. IBaseRepository, pagination types, and specific-repo inheritance added per architecture correction.
+**Status**: ALL PHASES COMPLETE (19/19 tasks). Phase 3 verification pass performed 2026-06-15 — build clean, 308/308 tests green, ROADMAP updated. Ready for archive.
 
 ## Completed Tasks
 
@@ -15,6 +15,25 @@
 - [x] 1.4 Create `src/Project.Application/GlobalUsings.cs`
 - [x] 1.5 Write `tests/.../Messaging/CqrsContractTests.cs` — RED phase confirmed (10 compile errors)
 - [x] 1.6 Create `src/.../Abstractions/Messaging/{ICommand,IQuery,ICommandHandler,IQueryHandler}.cs` — 4 tests pass
+
+### Phase 2 — Repository & Security Interfaces
+
+- [x] 2.1 Write `tests/.../Persistence/RepositoryContractTests.cs` — 13 tests pass
+- [x] 2.2 Create `src/.../Abstractions/Persistence/{IUser,IRole,IPermission,IRefreshToken,IMenuItem}Repository.cs`
+- [x] 2.3 Write `tests/.../Security/SecurityBoundaryTests.cs` — 5 tests pass (reflection-hardened 2026-06-15)
+- [x] 2.4 Create `src/.../Abstractions/Security/{IUserSession,ISuperadminEnforcementContext,ITokenService}.cs`
+- [x] 2.5 Create `src/.../Abstractions/Validation/IValidated.cs` + ValidationMarkerTests (2 tests pass)
+- [x] 2.6 Create IBaseRepository.cs with shared CRUD + paginated search
+- [x] 2.7 Create PageRequest.cs + PagedResult.cs
+- [x] 2.8 Refactor per-aggregate repos to inherit from IBaseRepository<TEntity,TId>
+- [x] 2.9 Write PageRequestTests.cs + PagedResultTests.cs (16 tests pass)
+- [x] 2.10 Write BaseRepositoryContractTests (6 tests pass, within RepositoryContractTests)
+
+### Phase 3 — Final Verification Pass (2026-06-15)
+
+- [x] 3.1 `dotnet build apps/api` — clean build, zero EF Core/ASP.NET refs in Application
+- [x] 3.2 `dotnet test apps/api` — all 308 tests green (239 Unit + 67 Application + 2 Integration)
+- [x] 3.3 Update ROADMAP.md — Application layer implementation status and next actions updated
 
 ## TDD Cycle Evidence
 
@@ -35,6 +54,11 @@
 | 2.6 | PageRequestTests.cs + PagedResultTests.cs | Unit | N/A (new) | ✅ 19 compile errors | ✅ 16/16 pass | ✅ 8 scenarios across both types | ➖ Clean |
 | 2.8 | BaseRepositoryContractTests | Unit | ✅ 67/67 passing | ✅ 1 compile error | ✅ 6/6 pass | ✅ 6 cases (GetById, Add, Update, Delete, GetPaged×2) | ➖ Clean |
 | 2.10 | Repository interfaces refactor | — | ✅ 67/67 passing | ✅ 15 compile errors | ✅ 67/67 pass | ✅ 5 repos inherit from IBaseRepository; Update/Delete/GetPagedAsync added | ➖ Clean |
+| 3.1 | dotnet build (verification) | — | ✅ 308 passing | — | ✅ 0 errors, 0 warnings | ➖ Not applicable (verification only; no new code) | ➖ Clean |
+| 3.2 | dotnet test (verification) | — | ✅ 308 passing | — | ✅ 308/308 green | ➖ Not applicable (verification only; no new code) | ➖ Clean |
+| 3.3 | ROADMAP.md (verification) | — | ✅ 308 passing | — | ✅ Updated | ➖ Not applicable (doc only) | ➖ Clean |
+
+**Note**: Phase 3 is verification/docs-only. No new production or test code was added. The Strict TDD cycle (RED→GREEN→REFACTOR) does not apply — these tasks are pure quality gates per `config.yaml` verify rules.
 
 **Total Application tests written**: 67
 **Total Application tests passing**: 67
@@ -79,6 +103,9 @@
 | `apps/api/src/Project.Application/Abstractions/Persistence/PagedResult.cs` | Created |
 | `apps/api/tests/Project.ApplicationTests/Abstractions/Persistence/PageRequestTests.cs` | Created |
 | `apps/api/tests/Project.ApplicationTests/Abstractions/Persistence/PagedResultTests.cs` | Created |
+| `ROADMAP.md` | Modified (Phase 3) — Application layer status + next actions updated |
+| `openspec/changes/application-layer/tasks.md` | Modified (Phase 3) — all 19 tasks checked [x] |
+| `openspec/changes/application-layer/apply-progress.md` | Modified (Phase 3) — final pass evidence appended |
 
 ## Deviations from Design
 - Work Unit 1 matches design.
@@ -91,22 +118,21 @@
 - Fresh review also flagged `ITokenService_HasNoRawTokenMethods` and `SuperadminEnforcementContext_ExposesRequiredMethods` as weak regression guards (stub-only, no reflection). Both tests strengthened 2026-06-15 per review directive.
 - Arch correction added IBaseRepository + pagination without breaking any existing tests (67 → 67; 22 new tests added across 5 new test scenarios).
 
-## Remaining Tasks (Phase 3)
-- [ ] 3.1 `dotnet build apps/api` — zero EF Core / ASP.NET references in Application project
-- [ ] 3.2 `dotnet test apps/api` — all tests green
-- [ ] 3.3 Update `ROADMAP.md` Backend Application row to "In Progress"
+## Remaining Tasks
+- None. All 19/19 tasks complete.
 
 ## Workload / PR Boundary
 - Mode: Chained PR slice (feature-branch-chain)
-- Completed work units: PR 1a (Result/CQRS) + PR 1b (Repository/Security/Validation contracts)
+- Completed work units: PR 1a (Result/CQRS) + PR 1b (Repository/Security/Validation contracts) + Phase 3 verification
 - PR 1a size: ~458 code/test lines
 - PR 1b size: 739 new-file lines before modified files
-- Next work unit: Phase 3 — verification and roadmap update
+- Phase 3: 3 verification tasks, 3 doc files modified (ROADMAP.md, tasks.md, apply-progress.md)
 
-## Development Verification Evidence
-- `dotnet build apps/api` — PASS during Work Unit 2 development (0 errors, 0 warnings)
-- `dotnet test apps/api` — PASS during Work Unit 2 development: 308 tests (67 Application + 239 Unit + 2 Integration). Re-confirmed 2026-06-15 after security regression hardening.
-- Application package refs: only FluentValidation (12.1.1) — zero EF Core or ASP.NET
-- Project.Application.csproj references: only Project.Domain + FluentValidation
-
-These are development/review evidence entries. Phase 3 tasks remain unchecked until the formal final verification pass records them.
+## Final Verification Evidence (Phase 3 — 2026-06-15)
+- `dotnet build apps/api` — PASS (0 errors, 0 warnings). All 9 projects compile.
+- `dotnet test apps/api` — PASS. 308/308 tests green:
+  - Project.UnitTests: 239 passed
+  - Project.ApplicationTests: 67 passed
+  - Project.IntegrationTests: 2 passed
+- `Project.Application.csproj` — verified: only `Project.Domain` + `FluentValidation v12.1.1`. Zero EF Core, ASP.NET, Infrastructure, or API references.
+- `ROADMAP.md` — Application layer implementation row updated with current status and next actions.

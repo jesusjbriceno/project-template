@@ -11,7 +11,7 @@ This roadmap tracks the implementation state of the base project. It is updated 
 | Domain model planning | ✅ Archived | Source-of-truth spec exists at `openspec/specs/domain-model/spec.md`; audit trail archived under `openspec/changes/archive/2026-06-14-domain-model/`. |
 | Domain model implementation | ✅ Done | All 6 slices complete and archived. 26/26 tasks done. 241 tests green. BCL-only verified. |
 | Application layer planning | ✅ Done | Proposal, spec, design, tasks, and apply progress exist under `openspec/changes/application-layer/`. |
-| Application layer implementation | 🟡 In progress | Work Unit 1 merged to tracker; Work Unit 2 implemented and under documentation/re-review before commit. |
+| Application layer implementation | 🟡 In progress | Phase 1+2 implemented (16/19 tasks). Phase 3 verification: 308 tests green, zero EF Core/ASP.NET refs confirmed. Ready for archive. |
 
 ## Domain Model Slices
 
@@ -31,8 +31,8 @@ This roadmap tracks the implementation state of the base project. It is updated 
 3. ✅ Slice 5 fresh review fixes applied (5 findings: SHA-256 enforcement, expired rotate guard, reuse detection, mutation order, Guid.Empty familyId).
 4. ✅ Slice 6 final pass completed: 241 tests green, BCL-only verified, 14/14 spec scenarios covered.
 5. ✅ Domain-model verified, archived, and main spec synced.
-6. 🟡 Continue `application-layer`: fix Work Unit 2 documentation, re-review, then commit/merge PR 1b to tracker.
-7. Next after PR 1b: Phase 3 verification and roadmap update for `application-layer`.
+6. 🟡 Complete `application-layer` Phase 3 verification and archive. Work Units 1+2 implemented; 308/308 tests green.
+7. Next after archive: Infrastructure layer — EF Core DbContext, PostgreSQL mappings, repository implementations.
 
 ## Backlog by Phase
 
