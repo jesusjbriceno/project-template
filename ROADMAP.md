@@ -90,7 +90,7 @@ This roadmap tracks the implementation state of the base project. It is updated 
 ### Quality Gates
 
 - ⬜ `.editorconfig` and formatter workflow.
-- 🟡 Sonar/static analysis baseline — CI workflow lives at `.github/workflows/sonar-develop.yml` against `project-template` project key; triggers on push to `develop` only (SonarQube Community branch limitation). The SonarScanner for .NET v8+ ignores `sonar-project.properties`; all properties are passed via `dotnet sonarscanner begin` with `sonar.projectBaseDir=apps/api`. Coverage imported from `coverlet.collector` Cobertura output into `apps/api/coverage/coverage.cobertura.xml` and read by the .NET scanner via `sonar.cs.cobertura.reportsPaths`.
+- ✅ Sonar/static analysis baseline — CI workflow lives at `.github/workflows/sonar-develop.yml` against `project-template` project key; triggers on push to `develop` only (SonarQube Community branch limitation). The SonarScanner for .NET v8+ ignores `sonar-project.properties`; all properties are passed via `dotnet sonarscanner begin` with `sonar.projectBaseDir=apps/api`. Coverage is imported from `coverlet.collector` Cobertura output into `apps/api/coverage/coverage.cobertura.xml` and read by the .NET scanner via `sonar.cs.cobertura.reportsPaths`. Workflow run `27541345420` passed on `develop` after adding a SonarQube availability check, scanner timeout settings, and stopping `sonarscanner end` from running after a failed `begin`.
 - ⬜ Dependency scanning.
 - ⬜ Secret scanning.
 - ⬜ OWASP checklist.
