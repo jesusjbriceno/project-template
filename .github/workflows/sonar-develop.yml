@@ -57,6 +57,7 @@ jobs:
 
       - name: SonarScanner begin
         shell: bash
+        working-directory: apps/api
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ vars.SONAR_URL }}
@@ -125,6 +126,7 @@ jobs:
       - name: SonarScanner end
         if: always()
         shell: bash
+        working-directory: apps/api
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ vars.SONAR_URL }}
