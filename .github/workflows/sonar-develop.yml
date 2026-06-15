@@ -64,12 +64,19 @@ jobs:
         run: |
           dotnet sonarscanner begin \
             /k:"project-template" \
+            /n:"project-template" \
+            /v:"1.0" \
             /d:sonar.token="${SONAR_TOKEN}" \
             /d:sonar.host.url="${SONAR_HOST_URL}" \
+            /d:sonar.projectBaseDir=. \
+            /d:sonar.sources=src \
+            /d:sonar.tests=tests \
+            /d:sonar.sourceEncoding=UTF-8 \
             /d:sonar.scanner.scanAll=false \
             /d:sonar.qualitygate.wait=true \
             /d:sonar.qualitygate.timeout=300 \
             /d:sonar.exclusions="**/bin/**,**/obj/**,**/TestResults/**,**/coverage/**" \
+            /d:sonar.test.exclusions="**/bin/**,**/obj/**,**/TestResults/**,**/coverage/**" \
             /d:sonar.cs.cobertura.reportsPaths="coverage/coverage.cobertura.xml"
 
       - name: Restore
