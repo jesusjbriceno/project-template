@@ -42,7 +42,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.dotnet/tools
-          key: dotnet-tools-${{ runner.os }}-${{ hashFiles('apps/api/sonar-project.properties', '.github/workflows/sonar-develop.yml') }}
+          key: dotnet-tools-${{ runner.os }}-${{ hashFiles('.github/workflows/sonar-develop.yml') }}
           restore-keys: |
             dotnet-tools-${{ runner.os }}-
 
@@ -57,7 +57,6 @@ jobs:
 
       - name: SonarScanner begin
         shell: bash
-        working-directory: apps/api
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ vars.SONAR_URL }}
@@ -68,7 +67,7 @@ jobs:
             /v:"1.0" \
             /d:sonar.token="${SONAR_TOKEN}" \
             /d:sonar.host.url="${SONAR_HOST_URL}" \
-            /d:sonar.projectBaseDir=. \
+            /d:sonar.projectBaseDir="${{ github.workspace }}/apps/api" \
             /d:sonar.sources=src \
             /d:sonar.tests=tests \
             /d:sonar.sourceEncoding=UTF-8 \
@@ -77,7 +76,7 @@ jobs:
             /d:sonar.qualitygate.timeout=300 \
             /d:sonar.exclusions="**/bin/**,**/obj/**,**/TestResults/**,**/coverage/**" \
             /d:sonar.test.exclusions="**/bin/**,**/obj/**,**/TestResults/**,**/coverage/**" \
-            /d:sonar.cs.cobertura.reportsPaths="coverage/coverage.cobertura.xml"
+            /d:sonar.cs.cobertura.reportsPaths="${{ github.workspace }}/apps/api/coverage/coverage.cobertura.xml"
 
       - name: Restore
         shell: bash
@@ -126,7 +125,6 @@ jobs:
       - name: SonarScanner end
         if: always()
         shell: bash
-        working-directory: apps/api
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ vars.SONAR_URL }}
