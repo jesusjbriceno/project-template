@@ -8,8 +8,10 @@ This roadmap tracks the implementation state of the base project. It is updated 
 |------|--------|-------|
 | Repository scaffold | ✅ Done | Initial monorepo, Docker, API health endpoint, OpenSpec, AGENTS.md, README.md. |
 | Git Flow | ✅ Active | Work is organized in feature branches from `develop`; releases will be promoted to `main`. |
-| Domain model planning | ✅ Done | Proposal, spec, design, tasks, and apply progress exist under `openspec/changes/domain-model/`. |
-| Domain model implementation | ✅ Done | All 6 slices complete. 26/26 tasks done. 241 tests green. BCL-only verified. Ready for verify/archive. |
+| Domain model planning | ✅ Archived | Source-of-truth spec exists at `openspec/specs/domain-model/spec.md`; audit trail archived under `openspec/changes/archive/2026-06-14-domain-model/`. |
+| Domain model implementation | ✅ Done | All 6 slices complete and archived. 26/26 tasks done. 241 tests green. BCL-only verified. |
+| Application layer planning | ✅ Done | Proposal, spec, design, tasks, and apply progress exist under `openspec/changes/application-layer/`. |
+| Application layer implementation | 🟡 In progress | Work Unit 1 merged to tracker; Work Unit 2 implemented and under documentation/re-review before commit. |
 
 ## Domain Model Slices
 
@@ -28,9 +30,9 @@ This roadmap tracks the implementation state of the base project. It is updated 
 2. ✅ Slice 5 RefreshToken + MenuItem implemented on `feature/domain-model-05-tokens-menu`.
 3. ✅ Slice 5 fresh review fixes applied (5 findings: SHA-256 enforcement, expired rotate guard, reuse detection, mutation order, Guid.Empty familyId).
 4. ✅ Slice 6 final pass completed: 241 tests green, BCL-only verified, 14/14 spec scenarios covered.
-5. Next: Run `sdd-verify` to confirm full compliance, then `sdd-archive` to sync delta specs.
-6. Merge completed slices to `develop` after verification.
-7. Mark domain-model change complete.
+5. ✅ Domain-model verified, archived, and main spec synced.
+6. 🟡 Continue `application-layer`: fix Work Unit 2 documentation, re-review, then commit/merge PR 1b to tracker.
+7. Next after PR 1b: Phase 3 verification and roadmap update for `application-layer`.
 
 ## Backlog by Phase
 
@@ -45,10 +47,11 @@ This roadmap tracks the implementation state of the base project. It is updated 
 
 ### Backend Application
 
-- ⬜ Result pattern.
-- ⬜ CQRS abstractions.
+- ✅ Result pattern.
+- ✅ CQRS abstractions.
 - ⬜ FluentValidation pipeline.
-- ⬜ Repository interfaces.
+- 🟡 Repository interfaces.
+- 🟡 Generic auth/session/security contracts.
 - ⬜ Superadmin transactional enforcement in use cases.
 
 ### Backend Infrastructure

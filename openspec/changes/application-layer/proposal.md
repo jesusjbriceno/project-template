@@ -9,7 +9,7 @@ Create the first Application-layer slice so future use cases have stable Clean A
 ### In Scope
 - Result pattern foundation: `Result`, `Result<T>`, application errors/codes.
 - CQRS command/query and handler contracts without external mediator dependency.
-- Application-facing repository interfaces for Domain aggregates.
+- Application-facing repository interfaces for Domain aggregates: shared `IBaseRepository<TEntity,TId>` with CRUD + paginated search, plus per-aggregate interfaces (`IUserRepository`, `IRoleRepository`, `IPermissionRepository`, `IRefreshTokenRepository`, `IMenuItemRepository`).
 - Generic auth/session/security contracts, including refresh-token family revocation and login/logout/session lifecycle boundaries.
 - Controlled Superadmin enforcement context so generic contracts cannot bypass Domain invariants.
 - Foundation unit tests for Result behavior and contract expectations where applicable.

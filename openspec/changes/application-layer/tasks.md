@@ -4,7 +4,7 @@
 
 | Field | Value |
 |-------|-------|
-| Estimated changed lines | 500-600 |
+| Estimated changed lines | 1,300-1,500 including SDD artifacts; Work Unit 2 alone is 739 new-file lines before modified files |
 | 400-line budget risk | High |
 | Chained PRs recommended | Yes |
 | Suggested split | PR 1a → PR 1b |
@@ -20,13 +20,13 @@ Chain strategy: feature-branch-chain
 
 | Unit | Goal | Likely PR | Notes |
 |------|------|-----------|-------|
-| 1 | Result pattern + CQRS contracts + tests | PR 1a | base=`feature/application-layer` tracker; ~280 lines |
-| 2 | Repository + Security interfaces + tests | PR 1b | base=PR 1a branch; ~260 lines; depends on Result/CQRS types |
+| 1 | Result pattern + CQRS contracts + tests | PR 1a | base=`feature/application-layer` tracker; ~458 code/test lines |
+| 2 | Repository + Security interfaces + tests | PR 1b | base=PR 1a branch; 739 new-file lines before modified files; depends on Result/CQRS types |
 
 ## Phase 1: Result Pattern & CQRS Contracts
 
 - [x] 1.1 Write `tests/.../Common/ResultTests.cs` + `ErrorTests.cs` — failing tests for `Result`, `Result<T>`, `Error`
-- [x] 1.2 Create `src/Project.Application/Common/Error.cs` with stable error codes
+- [x] 1.2 Create `src/Project.Application/Common/Error.cs` with machine-readable error code/message contract
 - [x] 1.3 Create `src/Project.Application/Common/Result.cs` + `ResultT.cs` with `IsSuccess`, implicit conversions
 - [x] 1.4 Create `src/Project.Application/GlobalUsings.cs`
 - [x] 1.5 Write `tests/.../Messaging/CqrsContractTests.cs` — compile-time contract proof
@@ -34,11 +34,16 @@ Chain strategy: feature-branch-chain
 
 ## Phase 2: Repository & Security Interfaces
 
-- [ ] 2.1 Write `tests/.../Persistence/RepositoryContractTests.cs` — hand-rolled stubs prove async sigs
-- [ ] 2.2 Create `src/.../Abstractions/Persistence/{IUser,IRole,IPermission,IRefreshToken,IMenuItem}Repository.cs`
-- [ ] 2.3 Write `tests/.../Security/SecurityBoundaryTests.cs` — two-interface distinction, no raw-token surface
-- [ ] 2.4 Create `src/.../Abstractions/Security/{IUserSession,ISuperadminEnforcementContext,ITokenService}.cs`
-- [ ] 2.5 Create `src/.../Abstractions/Validation/IValidated.cs`
+- [x] 2.1 Write `tests/.../Persistence/RepositoryContractTests.cs` — hand-rolled stubs prove async sigs
+- [x] 2.2 Create `src/.../Abstractions/Persistence/{IUser,IRole,IPermission,IRefreshToken,IMenuItem}Repository.cs`
+- [x] 2.3 Write `tests/.../Security/SecurityBoundaryTests.cs` — two-interface distinction, no raw-token surface
+- [x] 2.4 Create `src/.../Abstractions/Security/{IUserSession,ISuperadminEnforcementContext,ITokenService}.cs`
+- [x] 2.5 Create `src/.../Abstractions/Validation/IValidated.cs`
+- [x] 2.6 Create `src/.../Abstractions/Persistence/IBaseRepository.cs` with `IBaseRepository<TEntity,TId>` — shared CRUD + paginated search
+- [x] 2.7 Create `src/.../Abstractions/Persistence/{PageRequest,PagedResult}.cs` — Application-level pagination types
+- [x] 2.8 Refactor per-aggregate repositories to inherit from `IBaseRepository<TEntity,TId>` — remove redundant methods
+- [x] 2.9 Write `tests/.../Persistence/{PageRequest,PagedResult}Tests.cs` — TDD for pagination types
+- [x] 2.10 Write `tests/.../Persistence/BaseRepositoryContractTests.cs` — compile-time proof for base repo (within RepositoryContractTests)
 
 ## Phase 3: Verification
 
