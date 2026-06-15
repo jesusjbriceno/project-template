@@ -90,7 +90,7 @@ This roadmap tracks the implementation state of the base project. It is updated 
 ### Quality Gates
 
 - ⬜ `.editorconfig` and formatter workflow.
-- ⬜ Sonar/static analysis baseline.
+- 🟡 Sonar/static analysis baseline — CI workflow lives at `.github/workflows/sonar-develop.yml` against `project-template` project key; triggers on push to `develop` only (SonarQube Community branch limitation). Coverage imported from `coverlet.collector` Cobertura output into `apps/api/coverage/coverage.cobertura.xml` and read by the .NET scanner via `sonar.cs.cobertura.reportsPaths`.
 - ⬜ Dependency scanning.
 - ⬜ Secret scanning.
 - ⬜ OWASP checklist.
