@@ -1,0 +1,134 @@
+name: SonarQube (develop)
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sonar-develop
+  cancel-in-progress: true
+
+jobs:
+  sonar:
+    name: SonarScanner for .NET
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      DOTNET_VERSION: "10.0.x"
+      DOTNET_NOLOGO: "true"
+      DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "true"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          show-progress: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache .NET tools
+        id: cache-tools
+        uses: actions/cache@v4
+        with:
+          path: ~/.dotnet/tools
+          key: dotnet-tools-${{ runner.os }}-${{ hashFiles('apps/api/sonar-project.properties', '.github/workflows/sonar-develop.yml') }}
+          restore-keys: |
+            dotnet-tools-${{ runner.os }}-
+
+      - name: Install SonarScanner for .NET
+        if: steps.cache-tools.outputs.cache-hit != 'true'
+        shell: bash
+        run: dotnet tool install --global dotnet-sonarscanner
+
+      - name: Add dotnet tools to PATH
+        shell: bash
+        run: echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+
+      - name: SonarScanner begin
+        shell: bash
+        working-directory: apps/api
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_URL }}
+        run: |
+          dotnet sonarscanner begin \
+            /k:"project-template" \
+            /d:sonar.token="${SONAR_TOKEN}" \
+            /d:sonar.host.url="${SONAR_HOST_URL}" \
+            /d:sonar.scanner.scanAll=false \
+            /d:sonar.qualitygate.wait=true \
+            /d:sonar.qualitygate.timeout=300 \
+            /d:sonar.exclusions="**/bin/**,**/obj/**,**/TestResults/**,**/coverage/**" \
+            /d:sonar.cs.cobertura.reportsPaths="coverage/coverage.cobertura.xml"
+
+      - name: Restore
+        shell: bash
+        working-directory: apps/api
+        run: dotnet restore Project.slnx
+
+      - name: Build
+        shell: bash
+        working-directory: apps/api
+        run: |
+          dotnet build Project.slnx \
+            --no-restore \
+            --configuration Release \
+            --nologo \
+            /p:TreatWarningsAsErrors=true
+
+      - name: Test with XPlat Code Coverage
+        shell: bash
+        working-directory: apps/api
+        run: |
+          rm -rf TestResults coverage
+          mkdir -p coverage
+          dotnet test Project.slnx \
+            --no-build \
+            --configuration Release \
+            --nologo \
+            --collect:"XPlat Code Coverage" \
+            --logger:"console;verbosity=minimal" \
+            --results-directory:"TestResults"
+
+      - name: Consolidate Cobertura coverage
+        shell: bash
+        working-directory: apps/api
+        run: |
+          set -euo pipefail
+          mkdir -p coverage
+          shopt -s nullglob
+          FILES=(TestResults/**/coverage.cobertura.xml)
+          if [ ${#FILES[@]} -eq 0 ]; then
+            echo "No Cobertura coverage reports were produced."
+            exit 1
+          fi
+          cp -f "${FILES[0]}" coverage/coverage.cobertura.xml
+          echo "Selected coverage report: ${FILES[0]}"
+
+      - name: SonarScanner end
+        if: always()
+        shell: bash
+        working-directory: apps/api
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_URL }}
+        run: dotnet sonarscanner end /d:sonar.token="${SONAR_TOKEN}"
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonarqube-coverage
+          path: apps/api/coverage/coverage.cobertura.xml
+          if-no-files-found: warn
