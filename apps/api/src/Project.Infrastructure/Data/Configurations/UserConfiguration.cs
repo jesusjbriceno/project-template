@@ -23,8 +23,12 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         // Soft-delete: hidden by default (DeletedAt is a mapped column, IsDeleted is a computed property)
         builder.HasQueryFilter(u => u.DeletedAt == null);
 
-        // Navigation: UserRoles are mapped separately (Phase 3)
-        builder.Ignore(u => u.UserRoles);
+        // Navigation: UserRoles junction relationship
+        // Restrict delete: cannot remove a User while UserRoles reference it
+        builder.HasMany(u => u.UserRoles)
+            .WithOne()
+            .HasForeignKey(ur => ur.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Audit fields: timestamptz via DateTimeOffset (Npgsql native mapping)
         builder.Property(u => u.CreatedAt);

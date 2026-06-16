@@ -23,8 +23,12 @@ public sealed class RoleConfiguration : IEntityTypeConfiguration<Role>
         // Soft-delete: hidden by default (DeletedAt is a mapped column, IsDeleted is a computed property)
         builder.HasQueryFilter(r => r.DeletedAt == null);
 
-        // Navigation: RolePermissions are mapped separately (Phase 3)
-        builder.Ignore(r => r.RolePermissions);
+        // Navigation: RolePermissions junction relationship
+        // Restrict delete: cannot remove a Role while RolePermissions reference it
+        builder.HasMany(r => r.RolePermissions)
+            .WithOne()
+            .HasForeignKey(rp => rp.RoleId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Audit fields
         builder.Property(r => r.CreatedAt);
