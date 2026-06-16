@@ -40,6 +40,9 @@ public sealed class PostgresFixture : IAsyncLifetime
 
         using var scope = provider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        // Drop and recreate to ensure schema matches the current model
+        // (entity configurations are applied via OnModelCreating).
+        await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
     }
 
