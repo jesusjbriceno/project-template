@@ -59,6 +59,9 @@ public static class DependencyInjection
         // Repositories — scoped to match DbContext lifetime
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
+        services.AddScoped<IPermissionRepository, PermissionRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IMenuItemRepository, MenuItemRepository>();
 
         return services;
     }

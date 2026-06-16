@@ -376,3 +376,90 @@ None. All builds and tests pass clean with zero warnings.
 - `DependencyInjection.cs` — DI registration for UserRepository + RoleRepository
 - `Infrastructure/Data/Repositories/UserRepositoryTests.cs` — 169 lines
 - `Infrastructure/Data/Repositories/RoleRepositoryTests.cs` — 119 lines
+
+---
+
+## Completed Tasks (PR 5) — 2026-06-16
+
+**Scope**: Remaining three repositories (Permission, RefreshToken, MenuItem) + integration tests + DI registration
+**Base**: PR 4b branch (`feature/infrastructure-ef-core-pr4b`)
+**Lines**: +400 (7 files: 6 new, 1 modified), 0 deletions
+**Review budget**: Exactly 400 changed lines ✅ (397 new + 3 DI additions)
+**Tests**: 13 new integration tests across three test classes, all against PostgreSQL 17 via Testcontainers
+
+| Task | Description | Status |
+|------|-------------|--------|
+| 5.1 | RED: PermissionRepository, RefreshTokenRepository, MenuItemRepository integration tests | ✅ |
+| 5.2 | GREEN: PermissionRepository — GetByKeyAsync, ExistsByKeyAsync | ✅ |
+| 5.3 | GREEN: RefreshTokenRepository — GetByTokenHashAsync, GetActiveByFamilyIdAsync, RevokeFamilyAsync (ExecuteUpdate) | ✅ |
+| 5.4 | GREEN: MenuItemRepository — GetAllAsync, GetChildrenAsync | ✅ |
+
+## TDD Cycle Evidence (PR 5)
+
+| Task | Test File | Layer | RED | GREEN | REFACTOR |
+|------|-----------|-------|-----|-------|----------|
+| 5.1 | `PermissionRepositoryTests.cs` (4 tests) | Integration (PostgreSQL) | ✅ 16× CS0246 (missing repo types) | ✅ 4/4 pass | ✅ Trimmed to budget |
+| 5.1 | `RefreshTokenRepositoryTests.cs` (6 tests) | Integration (PostgreSQL) | ✅ 16× CS0246 (missing repo types) | ✅ 6/6 pass | ✅ Trimmed to budget |
+| 5.1 | `MenuItemRepositoryTests.cs` (3 tests) | Integration (PostgreSQL) | ✅ 16× CS0246 (missing repo types) | ✅ 3/3 pass | ✅ Trimmed to budget |
+| 5.2 | `PermissionRepository.cs` | Infrastructure | N/A (new) | ✅ All tests pass | ✅ Clean |
+| 5.3 | `RefreshTokenRepository.cs` | Infrastructure | N/A (new) | ✅ All tests pass | ✅ Clean |
+| 5.4 | `MenuItemRepository.cs` | Infrastructure | N/A (new) | ✅ All tests pass | ✅ Clean |
+
+### Test Summary (PR 5)
+- **New tests written**: 13 (4 Permission + 6 RefreshToken + 3 MenuItem)
+- **Tests passing**: 13/13 via `dotnet test` (Docker required for PostgreSQL)
+- **Full suite**: 379/379 (67 Application + 239 Unit + 73 Integration)
+- **Layers used**: Integration (13, PostgreSQL Testcontainers)
+
+### Files Changed (PR 5)
+
+#### Created (Infrastructure — 3 repositories)
+| File | Lines | Description |
+|------|-------|-------------|
+| `Data/Repositories/PermissionRepository.cs` | 31 | GetByKeyAsync, ExistsByKeyAsync |
+| `Data/Repositories/RefreshTokenRepository.cs` | 46 | GetByTokenHashAsync, GetActiveByFamilyIdAsync, RevokeFamilyAsync (ExecuteUpdateAsync) |
+| `Data/Repositories/MenuItemRepository.cs` | 35 | GetAllAsync, GetChildrenAsync |
+
+#### Created (Tests — 3 files)
+| File | Lines | Description |
+|------|-------|-------------|
+| `Infrastructure/Data/Repositories/PermissionRepositoryTests.cs` | 78 | 4 tests: key lookup + existence |
+| `Infrastructure/Data/Repositories/RefreshTokenRepositoryTests.cs` | 122 | 6 tests: hash lookup, active-family filtering, family revocation |
+| `Infrastructure/Data/Repositories/MenuItemRepositoryTests.cs` | 85 | 3 tests: full hierarchy, direct children, empty children |
+
+#### Modified (1 file)
+| File | Change |
+|------|--------|
+| `DependencyInjection.cs` | +3 lines: register IPermissionRepository, IRefreshTokenRepository, IMenuItemRepository |
+
+### Deviations from Design
+
+1. **`MenuItemRepository.GetAllAsync` is `GetRootItemsAsync`-equivalent**: The design listed `GetRootItemsAsync` but the `IMenuItemRepository` contract specifies `GetAllAsync` (returns complete hierarchy for cycle detection per `MenuItem.SetParent`). Implemented per the actual contract, not the task label.
+2. **Permissive `ParentId` comparison in `GetChildrenAsync`**: Uses `.Equals()` for `MenuItemId?` comparison, which handles null gracefully. The query filter already excludes soft-deleted items so no `includeDeleted` parameter is needed on `GetAllAsync`/`GetChildrenAsync`.
+
+### Issues Found
+
+None. All builds and tests pass clean with zero warnings.
+
+### Remaining Tasks
+
+- [ ] 1c.9 **DEFERRED**: EF migrations (InitialSchema) — requires entity configs from all phases
+- [ ] 2.5 **DEFERRED**: EF migrations (AddFoundationConfigs)
+- [ ] 3.6 **DEFERRED**: EF migrations (AddRelationConfigs)
+
+### PR 5 Verification
+
+```
+$ dotnet test apps/api
+ApplicationTests:   67/67 ✅
+UnitTests:         239/239 ✅
+IntegrationTests:   73/73 ✅ (60 prior + 13 new PR5)
+Total:             379/379 ✅
+
+$ dotnet build apps/api/Project.slnx
+0 Warnings, 0 Errors
+```
+
+### All Phases Complete
+
+All implementation phases (1a through 5) are now complete. Deferred migrations remain as tracked in `tasks.md`. The change is ready for `sdd-verify`.
