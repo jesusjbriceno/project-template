@@ -109,6 +109,18 @@ public sealed class BaseRepositoryTests : IClassFixture<PostgresFixture>
         Assert.Null(result);
     }
 
+    [Fact]
+    public async Task GetByIdAsync_NonExistingEntity_ReturnsNull()
+    {
+        await CleanDatabaseAsync();
+        using var context = CreateContext();
+
+        var repo = new UserRepository(context);
+        var result = await repo.GetByIdAsync(UserId.New());
+
+        Assert.Null(result);
+    }
+
     // ── AddAsync ───────────────────────────────────────────────────────────
 
     [Fact]
@@ -175,6 +187,30 @@ public sealed class BaseRepositoryTests : IClassFixture<PostgresFixture>
 
         Assert.Equal(2, result.TotalCount);
         Assert.Equal(2, result.Items.Count);
+    }
+
+    [Fact]
+    public async Task GetPagedAsync_SecondPage_ReturnsCorrectItemsAndMetadata()
+    {
+        await CleanDatabaseAsync();
+        using var context = CreateContext();
+
+        var clock = new SystemClock();
+        for (int i = 1; i <= 5; i++)
+        {
+            context.Users.Add(CreateTestUser($"secondpage-{i}@test.com", $"hash_sp_{i}", clock));
+        }
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+
+        var repo = new UserRepository(context);
+        var page2 = await repo.GetPagedAsync(new PageRequest(Page: 2, PageSize: 2));
+
+        Assert.Equal(2, page2.Items.Count);
+        Assert.Equal(5, page2.TotalCount);
+        Assert.Equal(3, page2.TotalPages);
+        Assert.True(page2.HasNextPage);
+        Assert.True(page2.HasPreviousPage);
     }
 
     // ── Update / Delete ─────────────────────────────────────────────────────

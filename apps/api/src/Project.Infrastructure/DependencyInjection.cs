@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Project.Application.Abstractions.Persistence;
 using Project.Application.Abstractions.Security;
 using Project.Domain.Common;
 using Project.Infrastructure.Data;
 using Project.Infrastructure.Data.Interceptors;
+using Project.Infrastructure.Data.Repositories;
 using Project.Infrastructure.Security;
 
 namespace Project.Infrastructure;
@@ -53,6 +55,10 @@ public static class DependencyInjection
             var interceptor = sp.GetRequiredService<AuditTimestampInterceptor>();
             options.AddInterceptors(interceptor);
         });
+
+        // Repositories — scoped to match DbContext lifetime
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRoleRepository, RoleRepository>();
 
         return services;
     }
