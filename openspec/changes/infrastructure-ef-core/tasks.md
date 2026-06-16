@@ -90,7 +90,7 @@ _Requires PR 1a + PR 1b files in working tree. PR 1c files are currently staged 
 
 ## Phase 5: Remaining Repositories (PR 5)
 
-- [ ] 5.1 **RED**: Write PermissionRepository, RefreshTokenRepository, MenuItemRepository integration tests
-- [ ] 5.2 **GREEN**: Create `PermissionRepository` — GetByKeyAsync
-- [ ] 5.3 **GREEN**: Create `RefreshTokenRepository` — GetByTokenHashAsync, GetByFamilyIdAsync, RevokeFamilyAsync (ExecuteUpdate)
-- [ ] 5.4 **GREEN**: Create `MenuItemRepository` — GetChildrenAsync, GetRootItemsAsync
+- [x] 5.1 **RED**: Write PermissionRepository, RefreshTokenRepository, MenuItemRepository integration tests
+- [x] 5.2 **GREEN**: Create `PermissionRepository` — GetByKeyAsync
+- [x] 5.3 **GREEN**: Create `RefreshTokenRepository` — GetByTokenHashAsync, GetByFamilyIdAsync, RevokeFamilyAsync (ExecuteUpdate)
+- [x] 5.4 **GREEN**: Create `MenuItemRepository` — GetChildrenAsync, GetRootItemsAsync
