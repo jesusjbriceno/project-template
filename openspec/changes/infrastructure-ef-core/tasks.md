@@ -53,40 +53,40 @@ _Requires PR 1a files in working tree. PR 1b files are currently staged in `_pr1
 
 _Requires PR 1a + PR 1b files in working tree. PR 1c files are currently staged in `_pr1c_deferred/`._
 
-- [ ] 1c.1 **RESTORE**: Move `_pr1c_deferred/` files back to working tree
-- [ ] 1c.2 **RED**: Write `PostgresFixture` + `ApplicationDbContextTests` — DI resolution and `CanCreateDatabase` against Testcontainers
-- [ ] 1c.3 **GREEN**: Add `Testcontainers.PostgreSql` to `Project.IntegrationTests.csproj`
-- [ ] 1c.4 **GREEN**: Create `AuditTimestampInterceptor` — resolves IClock, sets CreatedAt/UpdatedAt on Add/Modify
-- [ ] 1c.5 **GREEN**: Create `NullUserSession` — IUserSession returning null (scaffold until security slice)
-- [ ] 1c.6 **GREEN**: Create `ApplicationDbContext` — NoTracking, SplitQuery, NpgsqlRetryingExecutionStrategy, audit interceptor, all 7 DbSets
-- [ ] 1c.7 **GREEN**: Create `DependencyInjection.cs` — `AddInfrastructure` extension binding IClock→SystemClock, DbContext, interceptors, NullUserSession
-- [ ] 1c.8 **VERIFY**: Run `dotnet test` — all PR 1a + PR 1b + PR 1c tests pass (Docker required for Postgres container)
+- [x] 1c.1 **RESTORE**: Move `_pr1c_deferred/` files back to working tree
+- [x] 1c.2 **RED**: Write `PostgresFixture` + `ApplicationDbContextTests` — DI resolution and `CanCreateDatabase` against Testcontainers
+- [x] 1c.3 **GREEN**: Add `Testcontainers.PostgreSql` to `Project.IntegrationTests.csproj`
+- [x] 1c.4 **GREEN**: Create `AuditTimestampInterceptor` — resolves IClock, sets CreatedAt/UpdatedAt on Add/Modify
+- [x] 1c.5 **GREEN**: Create `NullUserSession` — IUserSession returning null (scaffold until security slice)
+- [x] 1c.6 **GREEN**: Create `ApplicationDbContext` — NoTracking, SplitQuery, NpgsqlRetryingExecutionStrategy, audit interceptor, all 7 DbSets
+- [x] 1c.7 **GREEN**: Create `DependencyInjection.cs` — `AddInfrastructure` extension binding IClock→SystemClock, DbContext, interceptors, NullUserSession
+- [x] 1c.8 **VERIFY**: Run `dotnet test` — all PR 1a + PR 1b + PR 1c tests pass (Docker required for Postgres container)
 - [ ] 1c.9 **DEFERRED**: Run `dotnet ef migrations add InitialSchema` — generate full schema migration (deferred: requires entity configs from Phase 2-3 for correct schema; see apply-progress remediation)
 
 ## Phase 2: Foundation Entity Configurations (PR 2)
 
-- [ ] 2.1 **RED**: Write User/Role/Permission round-trip integration tests — CRUD, Email normalization, Name unique, Key unique
-- [ ] 2.2 **GREEN**: Create `UserConfiguration` — `users` table, PK UserId, unique Email index, soft-delete `HasQueryFilter(e => !e.IsDeleted)`
-- [ ] 2.3 **GREEN**: Create `RoleConfiguration` — `roles` table, PK RoleId, unique Name index, soft-delete filter
-- [ ] 2.4 **GREEN**: Create `PermissionConfiguration` — `permissions` table, PK PermissionId, unique Key index (no soft-delete)
+- [x] 2.1 **RED**: Write User/Role/Permission round-trip integration tests — CRUD, Email normalization, Name unique, Key unique
+- [x] 2.2 **GREEN**: Create `UserConfiguration` — `users` table, PK UserId, unique Email index, soft-delete `HasQueryFilter(e => !e.IsDeleted)`
+- [x] 2.3 **GREEN**: Create `RoleConfiguration` — `roles` table, PK RoleId, unique Name index, soft-delete filter
+- [x] 2.4 **GREEN**: Create `PermissionConfiguration` — `permissions` table, PK PermissionId, unique Key index (no soft-delete)
 - [ ] 2.5 **GREEN**: Run `dotnet ef migrations add AddFoundationConfigs`
 
 ## Phase 3: Relation Entity Configurations (PR 3)
 
-- [ ] 3.1 **RED**: Write composite-key uniqueness, self-ref FK, TokenHash index integration tests
-- [ ] 3.2 **GREEN**: Create `UserRoleConfiguration` — `user_roles`, composite PK {UserId, RoleId}, FK→User, FK→Role
-- [ ] 3.3 **GREEN**: Create `RolePermissionConfiguration` — `role_permissions`, composite PK {RoleId, PermissionId}, FK→Role, FK→Permission
-- [ ] 3.4 **GREEN**: Create `MenuItemConfiguration` — `menu_items`, PK MenuItemId, self-ref FK on ParentId, soft-delete filter
-- [ ] 3.5 **GREEN**: Create `RefreshTokenConfiguration` — `refresh_tokens`, PK RefreshTokenId, unique TokenHash index, FamilyId index, ExpiresAt index
+- [x] 3.1 **RED**: Write composite-key uniqueness, self-ref FK, TokenHash index integration tests
+- [x] 3.2 **GREEN**: Create `UserRoleConfiguration` — `user_roles`, composite PK {UserId, RoleId}, FK→User, FK→Role
+- [x] 3.3 **GREEN**: Create `RolePermissionConfiguration` — `role_permissions`, composite PK {RoleId, PermissionId}, FK→Role, FK→Permission
+- [x] 3.4 **GREEN**: Create `MenuItemConfiguration` — `menu_items`, PK MenuItemId, self-ref FK on ParentId, soft-delete filter
+- [x] 3.5 **GREEN**: Create `RefreshTokenConfiguration` — `refresh_tokens`, PK RefreshTokenId, unique TokenHash index, FamilyId index, ExpiresAt index
 - [ ] 3.6 **GREEN**: Run `dotnet ef migrations add AddRelationConfigs`
 
 ## Phase 4: Repository Core (PR 4)
 
-- [ ] 4.1 **RED**: Write `BaseRepository` tests — GetByIdAsync (includeDeleted: true/false), AddAsync, Update, Delete, GetPagedAsync
-- [ ] 4.2 **RED**: Write `UserRepository` tests — GetByEmailAsync, ExistsAsync, GetActiveSuperadminsAsync
-- [ ] 4.3 **GREEN**: Create `BaseRepository<TEntity, TId>` — IgnoreQueryFilters when includeDeleted=true, PagedResult via Skip/Take
-- [ ] 4.4 **GREEN**: Create `UserRepository` — GetByEmailAsync, ExistsAsync, GetActiveSuperadminsAsync
-- [ ] 4.5 **GREEN**: Create `RoleRepository` — role-specific queries
+- [x] 4.1 **RED**: Write `BaseRepository` tests — GetByIdAsync (includeDeleted: true/false), AddAsync, Update, Delete, GetPagedAsync
+- [x] 4.2 **RED**: Write `UserRepository` tests — GetByEmailAsync, ExistsAsync, GetActiveSuperadminsAsync
+- [x] 4.3 **GREEN**: Create `BaseRepository<TEntity, TId>` — IgnoreQueryFilters when includeDeleted=true, PagedResult via Skip/Take
+- [x] 4.4 **GREEN**: Create `UserRepository` — GetByEmailAsync, ExistsAsync, GetActiveSuperadminsAsync
+- [x] 4.5 **GREEN**: Create `RoleRepository` — role-specific queries
 
 ## Phase 5: Remaining Repositories (PR 5)
 

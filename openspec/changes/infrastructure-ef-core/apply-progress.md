@@ -136,12 +136,11 @@ PR 1b files staged in `_pr1b_deferred/`. PR 1c files staged in `_pr1c_deferred/`
 
 ## Remaining Tasks
 
-- [x] PR 1b: Restore `_pr1b_deferred/` files + implement VO converters and Domain EF prep ✅
-- [ ] PR 1c: Restore `_pr1c_deferred/` files + implement DbContext core
-- [ ] Phase 2: Foundation Entity Configurations (User/Role/Permission)
-- [ ] Phase 3: Relation Entity Configurations (UserRole/RolePermission/MenuItem/RefreshToken)
-- [ ] Phase 4: Repository Core (Base + User/Role repos)
-- [ ] Phase 5: Remaining Repositories
+- [x] PR 1c: Restore `_pr1c_deferred/` files + implement DbContext core ✅
+- [x] Phase 2: Foundation Entity Configurations (User/Role/Permission) ✅
+- [x] Phase 3: Relation Entity Configurations (UserRole/RolePermission/MenuItem/RefreshToken) ✅
+- [x] Phase 4: Repository Core (Base + User/Role repos) ✅
+- [ ] Phase 5: Remaining Repositories (Permission/RefreshToken/MenuItem + tests + DI)
 
 ## PR 1a Verification
 
@@ -244,4 +243,136 @@ None. All builds and tests pass clean with zero warnings.
 ## Deferred Folder State
 
 - `_pr1b_deferred/`: Files successfully restored to working tree. The deferred copies remain as reference artifacts (untracked, not committed).
-- `_pr1c_deferred/`: **Untouched** — remains in safe deferred state for next PR slice. Zero contamination risk.
+- `_pr1c_deferred/`: Files successfully restored to working tree. The deferred copies remain as reference artifacts (untracked, not committed).
+
+---
+
+## Completed Tasks (PR 1c) — 2026-06-16
+
+**Commit**: `ac347b0` — `feat(infrastructure): add application db context core`
+**Scope**: ApplicationDbContext, AuditTimestampInterceptor, NullUserSession, DI registration, PostgresFixture + DbContext tests
+**Base**: PR 1b branch
+**Lines**: +327 (8 files, 0 deletions)
+**Tests**: `PostgresFixture` (Testcontainers PostgreSQL 17) + `ApplicationDbContextTests` (DI resolution, EnsureCreated, NoTracking)
+**Review budget**: Under 400 lines — clean chunk, no split needed
+**Migration**: Deferred (1c.9) — requires entity configs from Phase 2–3
+
+| Task | Description | Status |
+|------|-------------|--------|
+| 1c.1 | RESTORE: `_pr1c_deferred/` files to working tree | ✅ |
+| 1c.2 | RED: PostgresFixture + ApplicationDbContextTests | ✅ |
+| 1c.3 | GREEN: Testcontainers.PostgreSql package added | ✅ |
+| 1c.4 | GREEN: AuditTimestampInterceptor (IClock → CreatedAt/UpdatedAt) | ✅ |
+| 1c.5 | GREEN: NullUserSession (scaffold for security slice) | ✅ |
+| 1c.6 | GREEN: ApplicationDbContext (NoTracking, SplitQuery, 7 DbSets) | ✅ |
+| 1c.7 | GREEN: DependencyInjection.cs (AddInfrastructure extension) | ✅ |
+| 1c.8 | VERIFY: dotnet test passes (Docker required) | ✅ |
+| 1c.9 | DEFERRED: EF migrations | ⏸️ |
+
+### Key Files
+- `Data/ApplicationDbContext.cs` — NoTracking, SplitQuery, NpgsqlRetryingExecutionStrategy
+- `Data/Interceptors/AuditTimestampInterceptor.cs` — SaveChangesInterceptor
+- `Security/NullUserSession.cs` — IUserSession scaffold
+- `DependencyInjection.cs` — `AddInfrastructure(IConfiguration, IClock?)`
+- `Infrastructure/PostgresFixture.cs` — Testcontainers PostgreSQL 17
+- `Infrastructure/ApplicationDbContextTests.cs` — DI + EnsureCreated + NoTracking
+
+---
+
+## Completed Tasks (PR 2) — 2026-06-16
+
+**Commit**: `5fcf096` — `feat(infrastructure): add foundation entity configurations`
+**Scope**: UserConfiguration, RoleConfiguration, PermissionConfiguration + round-trip integration tests
+**Base**: PR 1c branch
+**Lines**: +397 (5 files, 0 deletions)
+**Tests**: `FoundationConfigurationsTests.cs` — 296 lines of CRUD, Email normalization, unique constraint, soft-delete round-trips
+**Review budget**: Under 400 lines ✅
+**Migration**: Deferred (2.5) — pending entity config consolidation
+
+| Task | Description | Status |
+|------|-------------|--------|
+| 2.1 | RED: User/Role/Permission round-trip integration tests | ✅ |
+| 2.2 | GREEN: UserConfiguration (users, PK UserId, unique Email, soft-delete) | ✅ |
+| 2.3 | GREEN: RoleConfiguration (roles, PK RoleId, unique Name, soft-delete) | ✅ |
+| 2.4 | GREEN: PermissionConfiguration (permissions, PK PermissionId, unique Key, no soft-delete) | ✅ |
+| 2.5 | EF migrations — deferred | ⏸️ |
+
+### Key Files
+- `Data/Configurations/UserConfiguration.cs` — `HasQueryFilter(e => !e.IsDeleted)`
+- `Data/Configurations/RoleConfiguration.cs` — unique Name index
+- `Data/Configurations/PermissionConfiguration.cs` — unique Key index
+- `Infrastructure/Data/Configurations/FoundationConfigurationsTests.cs` — 296 lines
+
+---
+
+## Completed Tasks (PR 3) — 2026-06-16
+
+**Commit**: `cc8d393` — `feat(infrastructure): add relation entity configurations`
+**Scope**: UserRole, RolePermission, MenuItem, RefreshToken configs + composite-key/self-ref FK tests
+**Base**: PR 2 branch
+**Lines**: +393 / −4 (10 files)
+**Tests**: `RelationConfigurationsTests.cs` — 209 lines: composite-key uniqueness, self-ref FK, TokenHash index
+**Review budget**: Under 400 lines ✅
+**Migration**: Deferred (3.6)
+
+| Task | Description | Status |
+|------|-------------|--------|
+| 3.1 | RED: Composite-key uniqueness, self-ref FK, TokenHash index tests | ✅ |
+| 3.2 | GREEN: UserRoleConfiguration (user_roles, composite PK, FK→User/Role) | ✅ |
+| 3.3 | GREEN: RolePermissionConfiguration (role_permissions, composite PK, FK→Role/Permission) | ✅ |
+| 3.4 | GREEN: MenuItemConfiguration (menu_items, self-ref FK ParentId, soft-delete) | ✅ |
+| 3.5 | GREEN: RefreshTokenConfiguration (refresh_tokens, unique TokenHash, FamilyId, ExpiresAt indexes) | ✅ |
+| 3.6 | EF migrations — deferred | ⏸️ |
+
+### Key Files
+- `Data/Configurations/UserRoleConfiguration.cs` — composite PK {UserId, RoleId}
+- `Data/Configurations/RolePermissionConfiguration.cs` — composite PK {RoleId, PermissionId}
+- `Data/Configurations/MenuItemConfiguration.cs` — self-ref FK + soft-delete
+- `Data/Configurations/RefreshTokenConfiguration.cs` — unique TokenHash, FamilyId, ExpiresAt indexes
+- Domain modifications: private constructors/setters on UserRole, RolePermission, MenuItem for EF materialization
+- `Infrastructure/Data/Configurations/RelationConfigurationsTests.cs` — 209 lines
+
+---
+
+## Completed Tasks (PR 4a) — 2026-06-16
+
+**Commit**: `3daff9c` — `feat(infrastructure): add base repository core`
+**Scope**: BaseRepository<TEntity, TId> + UserRepository + IBaseRepository contract + BaseRepositoryTests
+**Base**: PR 3 branch
+**Lines**: +381 / −19 (5 files)
+**Tests**: `BaseRepositoryTests.cs` — 206 lines: GetByIdAsync (includeDeleted true/false), AddAsync, Update, Delete, GetPagedAsync
+**Review budget**: Under 400 lines ✅
+
+| Task | Description | Status |
+|------|-------------|--------|
+| 4.1 | RED: BaseRepository tests (CRUD + paged + includeDeleted) | ✅ |
+| 4.3 | GREEN: BaseRepository<TEntity, TId> (IgnoreQueryFilters, Skip/Take) | ✅ |
+| 4.4 | GREEN: UserRepository (GetByEmailAsync, ExistsAsync, GetActiveSuperadminsAsync) | ✅ |
+
+### Key Files
+- `Data/Repositories/BaseRepository.cs` — 101 lines, generic CRUD + paging
+- `Data/Repositories/UserRepository.cs` — 51 lines, email-lookup + admin queries
+- `Abstractions/Persistence/IBaseRepository.cs` — updated contract
+- `Infrastructure/Data/Repositories/BaseRepositoryTests.cs` — 206 lines
+
+---
+
+## Completed Tasks (PR 4b) — 2026-06-16
+
+**Commit**: `bdd84c2` — `feat(infrastructure): add user role repositories`
+**Scope**: RoleRepository + UserRepositoryTests + RoleRepositoryTests + DI wiring
+**Base**: PR 4a branch
+**Lines**: +362 (5 files)
+**Tests**: `UserRepositoryTests.cs` (169 lines) + `RoleRepositoryTests.cs` (119 lines) + `BaseRepositoryTests.cs` extended (+36 lines)
+**Review budget**: Under 400 lines ✅
+
+| Task | Description | Status |
+|------|-------------|--------|
+| 4.2 | RED: UserRepository tests (GetByEmailAsync, ExistsAsync, GetActiveSuperadminsAsync) | ✅ |
+| 4.5 | GREEN: RoleRepository (role-specific queries) | ✅ |
+
+### Key Files
+- `Data/Repositories/RoleRepository.cs` — 32 lines
+- `DependencyInjection.cs` — DI registration for UserRepository + RoleRepository
+- `Infrastructure/Data/Repositories/UserRepositoryTests.cs` — 169 lines
+- `Infrastructure/Data/Repositories/RoleRepositoryTests.cs` — 119 lines
