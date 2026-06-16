@@ -15,8 +15,10 @@ public interface IBaseRepository<TEntity, TId>
 {
     /// <summary>
     /// Retrieves an entity by its strongly-typed identifier, or null if not found.
+    /// When <paramref name="includeDeleted"/> is true, soft-deleted records are included
+    /// (calls IgnoreQueryFilters on the underlying query).
     /// </summary>
-    Task<TEntity?> GetByIdAsync(TId id, CancellationToken cancellationToken = default);
+    Task<TEntity?> GetByIdAsync(TId id, bool includeDeleted = false, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Persists a new entity.
@@ -36,6 +38,8 @@ public interface IBaseRepository<TEntity, TId>
     /// <summary>
     /// Returns a paginated subset of entities without exposing IQueryable or provider-specific constructs.
     /// Infrastructure implementations handle the actual paging (EF Core Skip/Take, Dapper OFFSET/FETCH).
+    /// When <paramref name="includeDeleted"/> is true, soft-deleted records are included
+    /// (calls IgnoreQueryFilters on the underlying query).
     /// </summary>
-    Task<PagedResult<TEntity>> GetPagedAsync(PageRequest request, CancellationToken cancellationToken = default);
+    Task<PagedResult<TEntity>> GetPagedAsync(PageRequest request, bool includeDeleted = false, CancellationToken cancellationToken = default);
 }

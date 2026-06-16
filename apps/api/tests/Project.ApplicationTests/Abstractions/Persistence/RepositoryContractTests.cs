@@ -17,7 +17,7 @@ public sealed class RepositoryContractTests
 
     private sealed class UserRepositoryStub : IUserRepository
     {
-        public Task<User?> GetByIdAsync(UserId id, CancellationToken ct = default) =>
+        public Task<User?> GetByIdAsync(UserId id, bool includeDeleted = false, CancellationToken ct = default) =>
             Task.FromResult<User?>(null);
 
         public Task<User?> GetByEmailAsync(Email email, CancellationToken ct = default) =>
@@ -33,7 +33,7 @@ public sealed class RepositoryContractTests
 
         public void Delete(User entity) { }
 
-        public Task<PagedResult<User>> GetPagedAsync(PageRequest request, CancellationToken ct = default) =>
+        public Task<PagedResult<User>> GetPagedAsync(PageRequest request, bool includeDeleted = false, CancellationToken ct = default) =>
             Task.FromResult(new PagedResult<User>(Array.Empty<User>(), TotalCount: 0, request.Page, request.PageSize));
 
         public Task<IReadOnlyCollection<User>> GetActiveSuperadminsAsync(CancellationToken ct = default) =>
@@ -42,7 +42,7 @@ public sealed class RepositoryContractTests
 
     private sealed class RoleRepositoryStub : IRoleRepository
     {
-        public Task<Role?> GetByIdAsync(RoleId id, CancellationToken ct = default) =>
+        public Task<Role?> GetByIdAsync(RoleId id, bool includeDeleted = false, CancellationToken ct = default) =>
             Task.FromResult<Role?>(null);
 
         public Task<bool> ExistsAsync(RoleId id, CancellationToken ct = default) =>
@@ -55,7 +55,7 @@ public sealed class RepositoryContractTests
 
         public void Delete(Role entity) { }
 
-        public Task<PagedResult<Role>> GetPagedAsync(PageRequest request, CancellationToken ct = default) =>
+        public Task<PagedResult<Role>> GetPagedAsync(PageRequest request, bool includeDeleted = false, CancellationToken ct = default) =>
             Task.FromResult(new PagedResult<Role>(Array.Empty<Role>(), TotalCount: 0, request.Page, request.PageSize));
 
         public Task<IReadOnlyCollection<Role>> GetSystemRolesAsync(CancellationToken ct = default) =>
@@ -64,7 +64,7 @@ public sealed class RepositoryContractTests
 
     private sealed class PermissionRepositoryStub : IPermissionRepository
     {
-        public Task<Permission?> GetByIdAsync(PermissionId id, CancellationToken ct = default) =>
+        public Task<Permission?> GetByIdAsync(PermissionId id, bool includeDeleted = false, CancellationToken ct = default) =>
             Task.FromResult<Permission?>(null);
 
         public Task<Permission?> GetByKeyAsync(PermissionKey key, CancellationToken ct = default) =>
@@ -80,13 +80,13 @@ public sealed class RepositoryContractTests
 
         public void Delete(Permission entity) { }
 
-        public Task<PagedResult<Permission>> GetPagedAsync(PageRequest request, CancellationToken ct = default) =>
+        public Task<PagedResult<Permission>> GetPagedAsync(PageRequest request, bool includeDeleted = false, CancellationToken ct = default) =>
             Task.FromResult(new PagedResult<Permission>(Array.Empty<Permission>(), TotalCount: 0, request.Page, request.PageSize));
     }
 
     private sealed class RefreshTokenRepositoryStub : IRefreshTokenRepository
     {
-        public Task<RefreshToken?> GetByIdAsync(RefreshTokenId id, CancellationToken ct = default) =>
+        public Task<RefreshToken?> GetByIdAsync(RefreshTokenId id, bool includeDeleted = false, CancellationToken ct = default) =>
             Task.FromResult<RefreshToken?>(null);
 
         public Task<RefreshToken?> GetByTokenHashAsync(string tokenHash, CancellationToken ct = default) =>
@@ -99,7 +99,7 @@ public sealed class RepositoryContractTests
 
         public void Delete(RefreshToken entity) { }
 
-        public Task<PagedResult<RefreshToken>> GetPagedAsync(PageRequest request, CancellationToken ct = default) =>
+        public Task<PagedResult<RefreshToken>> GetPagedAsync(PageRequest request, bool includeDeleted = false, CancellationToken ct = default) =>
             Task.FromResult(new PagedResult<RefreshToken>(Array.Empty<RefreshToken>(), TotalCount: 0, request.Page, request.PageSize));
 
         public Task RevokeFamilyAsync(Guid familyId, CancellationToken ct = default) =>
@@ -112,7 +112,7 @@ public sealed class RepositoryContractTests
 
     private sealed class MenuItemRepositoryStub : IMenuItemRepository
     {
-        public Task<MenuItem?> GetByIdAsync(MenuItemId id, CancellationToken ct = default) =>
+        public Task<MenuItem?> GetByIdAsync(MenuItemId id, bool includeDeleted = false, CancellationToken ct = default) =>
             Task.FromResult<MenuItem?>(null);
 
         public Task AddAsync(MenuItem item, CancellationToken ct = default) =>
@@ -122,7 +122,7 @@ public sealed class RepositoryContractTests
 
         public void Delete(MenuItem entity) { }
 
-        public Task<PagedResult<MenuItem>> GetPagedAsync(PageRequest request, CancellationToken ct = default) =>
+        public Task<PagedResult<MenuItem>> GetPagedAsync(PageRequest request, bool includeDeleted = false, CancellationToken ct = default) =>
             Task.FromResult(new PagedResult<MenuItem>(Array.Empty<MenuItem>(), TotalCount: 0, request.Page, request.PageSize));
 
         public Task<IReadOnlyCollection<MenuItem>> GetAllAsync(CancellationToken ct = default) =>
@@ -141,7 +141,7 @@ public sealed class RepositoryContractTests
         IUserRepository repo = new UserRepositoryStub();
         var id = UserId.New();
 
-        User? result = await repo.GetByIdAsync(id, CancellationToken.None);
+        User? result = await repo.GetByIdAsync(id, cancellationToken: CancellationToken.None);
 
         Assert.Null(result); // stub returns null — proves signature compiles
     }
@@ -188,7 +188,7 @@ public sealed class RepositoryContractTests
     {
         IRoleRepository repo = new RoleRepositoryStub();
 
-        Role? result = await repo.GetByIdAsync(RoleId.New(), CancellationToken.None);
+        Role? result = await repo.GetByIdAsync(RoleId.New(), cancellationToken: CancellationToken.None);
 
         Assert.Null(result);
     }
@@ -316,7 +316,7 @@ public sealed class BaseRepositoryContractTests
 
     private sealed class BaseRepositoryStub : IBaseRepository<TestEntity, TestId>
     {
-        public Task<TestEntity?> GetByIdAsync(TestId id, CancellationToken ct = default) =>
+        public Task<TestEntity?> GetByIdAsync(TestId id, bool includeDeleted = false, CancellationToken ct = default) =>
             Task.FromResult<TestEntity?>(null);
 
         public Task AddAsync(TestEntity entity, CancellationToken ct = default) =>
@@ -332,7 +332,7 @@ public sealed class BaseRepositoryContractTests
             // No-op for contract proof — stub satisfies signature
         }
 
-        public Task<PagedResult<TestEntity>> GetPagedAsync(PageRequest request, CancellationToken ct = default) =>
+        public Task<PagedResult<TestEntity>> GetPagedAsync(PageRequest request, bool includeDeleted = false, CancellationToken ct = default) =>
             Task.FromResult(new PagedResult<TestEntity>(
                 Array.Empty<TestEntity>(), TotalCount: 0, request.Page, request.PageSize));
     }
@@ -343,7 +343,7 @@ public sealed class BaseRepositoryContractTests
         IBaseRepository<TestEntity, TestId> repo = new BaseRepositoryStub();
         var id = TestId.New();
 
-        TestEntity? result = await repo.GetByIdAsync(id, CancellationToken.None);
+        TestEntity? result = await repo.GetByIdAsync(id, cancellationToken: CancellationToken.None);
 
         Assert.Null(result); // stub returns null — proves signature compiles with typed ID
     }
@@ -393,7 +393,7 @@ public sealed class BaseRepositoryContractTests
         IBaseRepository<TestEntity, TestId> repo = new BaseRepositoryStub();
         var request = new PageRequest(Page: 1, PageSize: 10);
 
-        PagedResult<TestEntity> result = await repo.GetPagedAsync(request, CancellationToken.None);
+        PagedResult<TestEntity> result = await repo.GetPagedAsync(request, cancellationToken: CancellationToken.None);
 
         Assert.NotNull(result);
         Assert.Equal(1, result.Page);
@@ -409,7 +409,7 @@ public sealed class BaseRepositoryContractTests
 
         PagedResult<TestEntity> result = await repo.GetPagedAsync(
             new PageRequest(Page: 1, PageSize: 5),
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
 
         Assert.NotNull(result);
     }
