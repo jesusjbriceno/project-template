@@ -10,8 +10,9 @@ This roadmap tracks the implementation state of the base project. It is updated 
 | Git Flow | ✅ Active | Work is organized in feature branches from `develop`; releases will be promoted to `main`. |
 | Domain model planning | ✅ Archived | Source-of-truth spec exists at `openspec/specs/domain-model/spec.md`; audit trail archived under `openspec/changes/archive/2026-06-14-domain-model/`. |
 | Domain model implementation | ✅ Done | All 6 slices complete and archived. 26/26 tasks done. 241 tests green. BCL-only verified. |
-| Application layer planning | ✅ Done | Proposal, spec, design, tasks, and apply progress exist under `openspec/changes/application-layer/`. |
-| Application layer implementation | 🟡 In progress | Phase 1+2+3 complete (19/19 tasks). Phase 3 verification: 308 tests green, zero EF Core/ASP.NET refs confirmed. Ready for archive. |
+| Application layer | ✅ Archived | Source-of-truth spec exists at `openspec/specs/application-layer/spec.md`; audit trail archived under `openspec/changes/archive/2026-06-15-application-layer/`. |
+| Infrastructure EF Core | ✅ Archived | Source-of-truth spec exists at `openspec/specs/infrastructure-ef-core/spec.md`; audit trail archived under `openspec/changes/archive/2026-06-17-infrastructure-ef-core/`. |
+| MigrationService + initial seed | 🔵 Selected next | Next feature: apply EF Core migrations at startup and seed system roles, permissions, and initial Superadmin. |
 
 ## Domain Model Slices
 
@@ -31,8 +32,9 @@ This roadmap tracks the implementation state of the base project. It is updated 
 3. ✅ Slice 5 fresh review fixes applied (5 findings: SHA-256 enforcement, expired rotate guard, reuse detection, mutation order, Guid.Empty familyId).
 4. ✅ Slice 6 final pass completed: 241 tests green, BCL-only verified, 14/14 spec scenarios covered.
 5. ✅ Domain-model verified, archived, and main spec synced.
-6. 🟡 Complete `application-layer` Phase 3 verification and archive. Work Units 1+2 implemented; 308/308 tests green.
-7. Next after archive: Infrastructure layer — EF Core DbContext, PostgreSQL mappings, repository implementations.
+6. ✅ Application layer verified, archived, and main spec synced.
+7. ✅ Infrastructure EF Core verified, archived, merged to `develop`, and main spec synced.
+8. 🔵 Selected next feature: MigrationService + initial seed — apply migrations and seed system roles, permissions, and initial Superadmin.
 
 ## Backlog by Phase
 
@@ -49,25 +51,25 @@ This roadmap tracks the implementation state of the base project. It is updated 
 
 - ✅ Result pattern.
 - ✅ CQRS abstractions.
-- ⬜ FluentValidation pipeline.
-- 🟡 Repository interfaces.
-- 🟡 Generic auth/session/security contracts.
+- 🟡 FluentValidation pipeline marker exists; concrete pipeline behavior is deferred to use-case slices.
+- ✅ Repository interfaces.
+- ✅ Generic auth/session/security contracts.
 - ⬜ Superadmin transactional enforcement in use cases.
 
 ### Backend Infrastructure
 
-- ⬜ EF Core DbContext.
-- ⬜ PostgreSQL mappings.
-- ⬜ Typed ID conversions.
-- ⬜ Migration creation.
-- ⬜ Repository implementations.
+- ✅ EF Core DbContext.
+- ✅ PostgreSQL mappings.
+- ✅ Typed ID conversions.
+- ✅ Migration creation.
+- ✅ Repository implementations.
 - ⬜ Seed system roles, permissions, and initial Superadmin.
 
 ### Migration Strategy
 
 - ✅ Keep dedicated `MigrationService` for controlled deployments.
 - ✅ Allow API startup migrations/seeds only for Local/Development convenience, gated by configuration.
-- ⬜ Implement real MigrationService once Infrastructure exists.
+- 🔵 Implement real MigrationService + initial seed as the selected next feature.
 
 ### API
 

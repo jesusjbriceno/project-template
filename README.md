@@ -2,7 +2,7 @@
 
 Full-stack monorepo template: .NET 10 API + React TypeScript frontend, Docker-ready.
 
-**Current phase**: Phases 0–1 scaffold complete. Migration service exits immediately (EF Core migrations not yet wired). Frontend is a static placeholder — React/Vite app with TanStack Router arrives in Phase 9.
+**Current phase**: Domain, Application, and Infrastructure EF Core foundations are complete. The selected next feature is `MigrationService + initial seed`: apply EF Core migrations and seed system roles, permissions, and the initial Superadmin. Frontend is still a static placeholder — React/Vite app with TanStack Router arrives in a later phase.
 
 ## Quick Start
 
@@ -45,7 +45,7 @@ Domain → Application → Infrastructure → API / MigrationService
 - **Application**: Use cases, CQRS handlers, validators (FluentValidation), interfaces.
 - **Infrastructure**: EF Core, repositories, migrations, external services.
 - **API (Controllers/Endpoints)**: HTTP layer, auth middleware, request/response mapping.
-- **MigrationService**: Schema migrations and seed execution (runs and exits). **Phase 1 scaffold only** — EF Core migrations and superadmin seeding are not yet implemented. The service exits immediately with a status message.
+- **MigrationService**: Schema migrations and seed execution (runs and exits). The service exists as the deployment boundary; wiring real EF Core migration execution and initial seed data is the selected next feature.
 
 ### Constraints
 
@@ -109,7 +109,7 @@ cp .env.example .env
 | `POSTGRES_USER` | Database user (default: `postgres`) |
 | `POSTGRES_PASSWORD` | Database password (default: `dev_password_change_me` — change for production) |
 | `ConnectionStrings__DefaultConnection` | EF Core connection string |
-| `SUPERADMIN_EMAIL` | Initial superadmin email — **not yet used** (migration service is scaffold-only) |
-| `SUPERADMIN_PASSWORD` | Initial superadmin password — **not yet used** (migration service is scaffold-only) |
+| `SUPERADMIN_EMAIL` | Initial superadmin email — reserved for the selected MigrationService seed feature |
+| `SUPERADMIN_PASSWORD` | Initial superadmin password — reserved for the selected MigrationService seed feature |
 
-> **Phase 1 note:** The migration service is a scaffold. It does NOT apply EF Core migrations or seed a superadmin. The `SUPERADMIN_*` variables are reserved for a future phase.
+> **Next feature:** `MigrationService + initial seed` will make the migration service apply EF Core migrations and seed system roles, permissions, and the initial Superadmin using the reserved `SUPERADMIN_*` variables.
