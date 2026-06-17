@@ -1,9 +1,9 @@
 # Verification Report: infrastructure-ef-core
 
-**Date**: 2026-06-17 (remediated post-review)
+**Date**: 2026-06-17 (formal post-commit verify)
 **Mode**: interactive / hybrid artifact store (`openspec` + Engram)
 **Branch**: `feature/infrastructure-ef-core-migrations`
-**Verdict**: **PASS WITH WARNINGS** — implementation complete; migration consolidation re-review passed with non-blocking metadata warning remediated
+**Verdict**: **PASS** — implementation complete, migration consolidation committed at `59020a9`, full tests pass, and archive may proceed
 
 ## Scope Verified
 
@@ -29,10 +29,10 @@ Implementation evidence inspected:
 
 | Command | Result | Evidence |
 |---|---|---|
-| `git status --short --branch` | PASS | `## feature/infrastructure-ef-core-migrations...origin/feature/infrastructure-ef-core-pr4b` |
+| `git status --short --branch` | PASS | `## feature/infrastructure-ef-core-migrations...origin/feature/infrastructure-ef-core-pr4b [ahead 1]` |
+| `dotnet test "apps/api/tests/Project.IntegrationTests/Project.IntegrationTests.csproj" --filter "FullyQualifiedName~ApplicationDbContextTests"` | PASS | ApplicationDbContext focused integration tests: 4/4 passed, Failed: 0, Skipped: 0 |
 | `dotnet test "apps/api/Project.slnx"` | PASS | Unit: 239/239, Application: 67/67, Integration: 74/74, Total: 380/380, Failed: 0, Skipped: 0 |
-| `dotnet ef migrations add InitialInfrastructureSchema` | PASS | Generated 3 migration files + 1 DesignTimeDbContextFactory |
-| `dotnet build apps/api/Project.slnx` | PASS | 0 Warnings, 0 Errors |
+| Prior EF CLI generation: `dotnet ef migrations add InitialInfrastructureSchema` | PASS | Generated 3 migration files + 1 DesignTimeDbContextFactory; not re-run during this verify |
 
 ## Completeness Summary
 
@@ -109,16 +109,16 @@ None. All previously-identified blockers are resolved.
 
 ## Archive Readiness
 
-**Archive may proceed after committing this verified migration consolidation slice.**
+**Archive may proceed after this verify.**
 
-All implementation tasks are complete (39 completed + 3 superseded + 5 migration consolidation = 47 resolved). The test suite passes 380/380. The SplitQuery test now makes a genuine options-extension assertion (no longer a false-positive).
+All implementation tasks are complete (39 completed + 3 superseded + 5 migration consolidation = 47 resolved). The migration consolidation slice is already committed at `59020a9 feat(infrastructure): add initial ef core migration`. The test suite passes 380/380. The SplitQuery test now makes a genuine options-extension assertion (no longer a false-positive).
 
 Remaining caveats:
 1. SplitQuery multi-Include runtime behavior cannot be tested with the current domain model (navigationless junction entities) — this is a documented trade-off, not a defect.
 2. The `DesignTimeDbContextFactory` connection string fallback is intentionally a dummy value — appropriate for design-time CLI operations.
 
-Fresh re-review completed after remediation. It returned PASS WITH WARNINGS; the only warning was stale line-count metadata, now updated in the artifacts.
+Fresh formal post-commit verify completed after remediation. No critical blockers remain.
 
 ## Final Verdict
 
-**PASS WITH WARNINGS** — implementation tests pass (380/380), migration files exist, SDD artifacts are consistent, and fresh re-review passed after remediation. SplitQuery test now makes a genuine options-extension assertion (remediated from a false-positive). All spec scenarios have runtime evidence or documented trade-offs.
+**PASS** — implementation tests pass (380/380), focused ApplicationDbContext tests pass (4/4), migration files exist, SDD artifacts are consistent, and archive may proceed. SplitQuery test now makes a genuine options-extension assertion (remediated from a false-positive). All spec scenarios have runtime evidence or documented non-blocking trade-offs.
