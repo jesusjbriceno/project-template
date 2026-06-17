@@ -56,6 +56,9 @@ public static class DependencyInjection
             options.AddInterceptors(interceptor);
         });
 
+        // Password hasher — stateless, singleton lifetime
+        services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
+
         // Repositories — scoped to match DbContext lifetime
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();

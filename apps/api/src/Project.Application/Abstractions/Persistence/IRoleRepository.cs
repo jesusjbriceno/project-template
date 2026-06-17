@@ -20,4 +20,10 @@ public interface IRoleRepository : IBaseRepository<Role, RoleId>
     /// Returns all system-defined roles. Used during authorization and superadmin checks.
     /// </summary>
     Task<IReadOnlyCollection<Role>> GetSystemRolesAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Retrieves a role by its business name, or null if not found.
+    /// Respects the global soft-delete query filter (excludes deleted roles by default).
+    /// </summary>
+    Task<Role?> GetByNameAsync(string name, CancellationToken ct = default);
 }

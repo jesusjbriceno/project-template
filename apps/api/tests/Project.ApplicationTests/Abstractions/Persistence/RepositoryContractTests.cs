@@ -48,6 +48,9 @@ public sealed class RepositoryContractTests
         public Task<bool> ExistsAsync(RoleId id, CancellationToken ct = default) =>
             Task.FromResult(false);
 
+        public Task<Role?> GetByNameAsync(string name, CancellationToken ct = default) =>
+            Task.FromResult<Role?>(null);
+
         public Task AddAsync(Role role, CancellationToken ct = default) =>
             Task.CompletedTask;
 
