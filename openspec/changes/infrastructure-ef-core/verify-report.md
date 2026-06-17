@@ -1,9 +1,12 @@
-# Verification Report: infrastructure-ef-core
+## Verification Report
 
+**Change**: infrastructure-ef-core  
 **Date**: 2026-06-17 (formal post-commit verify)
 **Mode**: interactive / hybrid artifact store (`openspec` + Engram)
 **Branch**: `feature/infrastructure-ef-core-migrations`
-**Verdict**: **PASS** — implementation complete, migration consolidation committed at `59020a9`, full tests pass, and archive may proceed
+**Verdict**: PASS
+
+Implementation is complete, migration consolidation is committed at `59020a9`, full tests pass, and archive may proceed.
 
 ## Scope Verified
 
@@ -98,11 +101,11 @@ The three original migration tasks (1c.9, 2.5, 3.6) are resolved:
 
 None. All previously-identified blockers are resolved.
 
-### WARNING
+### Non-blocking Notes
 
 - **DesignTimeDbContextFactory connection string**: Previously hardcoded `Host=localhost;...;Password=postgres`. Remediated to env-first: reads `PROJECT_TEMPLATE_DESIGNTIME_CONNECTION` env var, with a clearly-dummy local fallback. The fallback is intentional — design-time factories only need a syntactically valid connection string for EF CLI model inspection; no real database connection is required during migration generation.
 
-### SUGGESTION
+### Future Considerations
 
 - If a future change adds navigation properties to junction entities (e.g., `UserRole.Role`), consider adding a full multi-Include runtime split-query test at that time.
 - The EF CLI migration files (931 lines total: migration, designer, and model snapshot) are auto-generated and should be reviewed for correctness but have zero hand-written content.
@@ -113,12 +116,14 @@ None. All previously-identified blockers are resolved.
 
 All implementation tasks are complete (39 completed + 3 superseded + 5 migration consolidation = 47 resolved). The migration consolidation slice is already committed at `59020a9 feat(infrastructure): add initial ef core migration`. The test suite passes 380/380. The SplitQuery test now makes a genuine options-extension assertion (no longer a false-positive).
 
-Remaining caveats:
-1. SplitQuery multi-Include runtime behavior cannot be tested with the current domain model (navigationless junction entities) — this is a documented trade-off, not a defect.
-2. The `DesignTimeDbContextFactory` connection string fallback is intentionally a dummy value — appropriate for design-time CLI operations.
+Notes:
+1. SplitQuery multi-Include runtime behavior is not applicable to the current domain model because junction entities are navigationless by design. The configured behavior is verified through EF Core options metadata.
+2. The `DesignTimeDbContextFactory` connection string fallback is intentionally a dummy value and is appropriate for design-time CLI model operations.
 
 Fresh formal post-commit verify completed after remediation. No critical blockers remain.
 
 ## Final Verdict
 
-**PASS** — implementation tests pass (380/380), focused ApplicationDbContext tests pass (4/4), migration files exist, SDD artifacts are consistent, and archive may proceed. SplitQuery test now makes a genuine options-extension assertion (remediated from a false-positive). All spec scenarios have runtime evidence or documented non-blocking trade-offs.
+**Verdict**: PASS
+
+Implementation tests pass (380/380), focused ApplicationDbContext tests pass (4/4), migration files exist, SDD artifacts are consistent, and archive may proceed. SplitQuery test now makes a genuine options-extension assertion (remediated from a false-positive). All spec scenarios have runtime evidence or documented non-blocking trade-offs.
