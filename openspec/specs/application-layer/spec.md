@@ -34,7 +34,7 @@ A shared `IBaseRepository<TEntity, TId>` SHALL expose common CRUD primitives (`G
 
 #### Scenario: Base repository contract
 
-- GIVEN `IBaseRepository<TEntity, TId>` → exposes `GetByIdAsync(TId, ct): TEntity?`, `AddAsync(TEntity, ct)`, `Update(TEntity)`, `Delete(TEntity)`, `GetPagedAsync(PageRequest, ct): PagedResult<TEntity>`
+- GIVEN `IBaseRepository<TEntity, TId>` → exposes `GetByIdAsync(TId, bool includeDeleted = false, ct): TEntity?`, `AddAsync(TEntity, ct)`, `Update(TEntity)`, `Delete(TEntity)`, `GetPagedAsync(PageRequest, bool includeDeleted = false, ct): PagedResult<TEntity>`
 - GIVEN `IUserRepository : IBaseRepository<User, UserId>` → inherits CRUD + paged search; adds `GetByEmailAsync`, `ExistsAsync`, `GetActiveSuperadminsAsync`
 
 #### Scenario: Paginated search without infrastructure leakage
@@ -48,6 +48,13 @@ A shared `IBaseRepository<TEntity, TId>` SHALL expose common CRUD primitives (`G
 - GIVEN `IUserRepository` → inherits `GetByIdAsync(UserId, ct): User?`, `AddAsync(User, ct)` from base
 - Update/Delete follow Domain lifecycle (deactivate, not physical delete unless allowed)
 - Exposes `GetActiveSuperadminsAsync(ct): IReadOnlyCollection<User>` for enforcement context
+
+#### Scenario: Include deleted records
+
+- GIVEN a soft-deleted User exists in the database
+- WHEN `GetByIdAsync(userId, includeDeleted: true)` is called
+- THEN the soft-deleted User SHALL be returned
+- AND calling `GetByIdAsync(userId)` (default) SHALL NOT return the soft-deleted User
 
 ### Requirement: Validation Direction
 

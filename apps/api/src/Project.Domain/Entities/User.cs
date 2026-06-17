@@ -32,6 +32,14 @@ public sealed class User : AuditableEntity
 
     public static DeletionPolicy DefaultPolicy => DeletionPolicy.UserDefault;
 
+#pragma warning disable CS8618
+    private User()
+    {
+        // Private parameterless constructor for EF Core materialization.
+        // Properties are set via their private setters after construction.
+    }
+#pragma warning restore CS8618
+
     private User(UserId id, Email email, string passwordHash, string createdBy, IClock clock)
     {
         Id = id;

@@ -14,11 +14,11 @@ namespace Project.Domain.Entities;
 /// </summary>
 public sealed class RefreshToken
 {
-    public RefreshTokenId Id { get; }
-    public string TokenHash { get; }
-    public Guid FamilyId { get; }
-    public DateTimeOffset ExpiresAt { get; }
-    public DateTimeOffset CreatedAt { get; }
+    public RefreshTokenId Id { get; private set; }
+    public string TokenHash { get; private set; }
+    public Guid FamilyId { get; private set; }
+    public DateTimeOffset ExpiresAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset? RevokedAt { get; private set; }
     public string? ReplacedByTokenHash { get; private set; }
 
@@ -37,6 +37,14 @@ public sealed class RefreshToken
     public bool IsReuseSignal => IsRevoked;
 
     public static DeletionPolicy DefaultPolicy => DeletionPolicy.RefreshTokenDefault;
+
+#pragma warning disable CS8618
+    private RefreshToken()
+    {
+        // Private parameterless constructor for EF Core materialization.
+        // Properties are set via their private setters after construction.
+    }
+#pragma warning restore CS8618
 
     private RefreshToken(
         RefreshTokenId id,
