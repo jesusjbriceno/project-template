@@ -15,6 +15,14 @@ public sealed class RolePermission
     public DateTimeOffset AssignedAt { get; private set; }
     public string AssignedBy { get; private set; }
 
+#pragma warning disable CS8618
+    private RolePermission()
+    {
+        // Private parameterless constructor for EF Core materialization.
+        // Properties are set via their private setters after construction.
+    }
+#pragma warning restore CS8618
+
     private RolePermission(RolePermissionId id, DateTimeOffset assignedAt, string assignedBy)
     {
         Id = id;

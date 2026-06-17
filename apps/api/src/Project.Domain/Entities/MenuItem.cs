@@ -26,6 +26,15 @@ public sealed class MenuItem : AuditableEntity
 
     public static DeletionPolicy DefaultPolicy => DeletionPolicy.MenuItemDefault;
 
+#pragma warning disable CS8618
+    private MenuItem()
+    {
+        // Private parameterless constructor for EF Core materialization.
+        // Properties (including audit fields from AuditableEntity) are set
+        // via their private setters after construction.
+    }
+#pragma warning restore CS8618
+
     private MenuItem(
         MenuItemId id,
         string label,
