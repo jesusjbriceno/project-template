@@ -90,7 +90,7 @@ Total: 421 passed, 0 failed, 0 skipped
 
 | Requirement | Scenario | Test / Evidence | Result |
 |-------------|----------|-----------------|--------|
-| Migration orchestration | Apply pending migrations and exit | `MigrationWorker`, MigrationService integration tests | ✅ COMPLIANT |
+| Migration orchestration | Apply unapplied migrations and exit | `MigrationWorker`, MigrationService integration tests | ✅ COMPLIANT |
 | Credential validation | Missing/invalid Superadmin config hard-fails | `SuperadminCredentialValidatorTests`, `MigrationWorkerTests` | ✅ COMPLIANT |
 | System roles | Seed `Superadmin` and `User` | `SeedDataTests` | ✅ COMPLIANT |
 | Permission catalog | Seed 22 current-state permissions | `PermissionCatalogTests`, `SeedDataTests` | ✅ COMPLIANT |
