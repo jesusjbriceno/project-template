@@ -142,3 +142,110 @@ None.
 ### Status
 
 11/16 tasks complete. Ready for Phase 3 / PR 3 (MigrationWorker + wiring + end-to-end tests).
+
+---
+
+## Batch: Phase 3 / PR 3 — MigrationWorker + Wiring + End-to-End
+
+**Date**: 2026-06-18
+**Mode**: Standard (project TDD)
+**Work unit**: MigrationWorker BackgroundService, host wiring, package reference, integration tests
+
+### Completed Tasks
+
+- [x] 3.1 Create `MigrationWorker` BackgroundService: validate→MigrateAsync→SeedAsync→StopApplication
+- [x] 3.2 Modify `Program.cs`: AddInfrastructure + MigrationWorker registration + host.Run
+- [x] 3.3 Add `BCrypt.Net-Next 4.0.3` to `Project.MigrationService.csproj`
+- [x] 3.4 `MigrationWorkerTests`: happy path (migrate+seed), missing-creds abort, re-run idempotency (5 tests)
+- [x] 3.5 `SeedDataTests`: catalog completeness (22 permissions, Superadmin 22 assignments), strict re-run snapshot equality (6 tests)
+
+### Files Changed
+
+| File | Action | Details |
+|------|--------|---------|
+| `apps/api/src/Project.MigrationService/MigrationWorker.cs` | Created | BackgroundService: validates creds (throws on failure), runs MigrateAsync (retry), seeds, calls StopApplication only on success; non-zero exit via unhandled exception on failure |
+| `apps/api/src/Project.MigrationService/Program.cs` | Modified | Replaced scaffold with AddInfrastructure(connStr) + AddHostedService<MigrationWorker> + host.RunAsync |
+| `apps/api/src/Project.MigrationService/Project.MigrationService.csproj` | Modified | Added BCrypt.Net-Next 4.0.3 (explicit dependency per design) |
+| `apps/api/src/Project.Application/Abstractions/Persistence/IPermissionRepository.cs` | Modified | Added `ListAsync` bulk query method for seed |
+| `apps/api/src/Project.Infrastructure/Data/Repositories/PermissionRepository.cs` | Modified | Implemented `ListAsync` via `AsNoTracking().ToListAsync` |
+| `apps/api/src/Project.MigrationService/SeedData.cs` | Modified | Replaced N+1 `GetByKeyAsync` loop with single `ListAsync` + dictionary lookup |
+| `apps/api/tests/Project.IntegrationTests/Project.IntegrationTests.csproj` | Modified | Added ProjectReference to Project.MigrationService |
+| `apps/api/tests/Project.ApplicationTests/Abstractions/Persistence/RepositoryContractTests.cs` | Modified | Added `ListAsync` stub to `PermissionRepositoryStub` |
+| `apps/api/tests/Project.IntegrationTests/MigrationService/MigrationServiceFixture.cs` | Created | Dedicated PostgreSQL 17 fixture with cold-start `ResetDatabaseAsync` via maintenance connection + `NpgsqlConnection.ClearAllPools` |
+| `apps/api/tests/Project.IntegrationTests/MigrationService/MigrationServiceCollection.cs` | Created | xUnit collection definition |
+| `apps/api/tests/Project.IntegrationTests/MigrationService/MigrationWorkerTests.cs` | Created | 5 integration tests: happy path, re-run idempotency, credential validation abort (3 variants); each test resets DB for true cold-start |
+| `apps/api/tests/Project.IntegrationTests/MigrationService/SeedDataTests.cs` | Created | 6 integration tests: catalog completeness (22 perms, Superadmin 22, User 0), strict re-run snapshot (PasswordHash, SecurityStamp, Role.IsSystem, Permission.Description); each test resets DB for true cold-start |
+
+### Implementation Details
+
+**MigrationWorker** orchestrates the full bootstrap:
+1. Reads `SUPERADMIN_EMAIL` / `SUPERADMIN_PASSWORD` from `IConfiguration`
+2. Validates via `SuperadminCredentialValidator` — throws `InvalidOperationException` on failure (Generic Host unhandled exception guarantees non-zero exit)
+3. Creates scoped `ApplicationDbContext`, runs `MigrateAsync()` inside Npgsql retry strategy
+4. Calls `SeedData.SeedAsync()` with all required services
+5. Calls `IHostApplicationLifetime.StopApplication()` **only on the success path** (after the try block)
+6. On exception: logs error, rethrows so the Generic Host terminates with non-zero exit code
+
+**Migration logging** uses the pending migrations count snapshot taken before `MigrateAsync`. We do NOT call `GetAppliedMigrationsAsync` on the same DbContext right after `MigrateAsync` because EF Core caches the migration history state per context instance and would return stale/empty data.
+
+**Bulk permission load** in `SeedData`:
+- `IPermissionRepository.ListAsync()` returns all permissions in one query.
+- The result is converted to a dictionary keyed by `PermissionKey` for O(1) lookups.
+- This replaces a 22-query N+1 loop with a single query.
+
+**Cold-start test isolation**:
+- `MigrationServiceFixture.ResetDatabaseAsync` opens a connection to the `postgres` maintenance database.
+- Terminates any active sessions on the test database (`pg_terminate_backend`).
+- Drops and recreates the test database.
+- Calls `NpgsqlConnection.ClearAllPools()` so the next test gets a fresh connection.
+- Each test class's `InitializeAsync` calls this, guaranteeing a true cold-start.
+
+**NoTracking pitfall learned**: When querying `UserRoles` navigation property with NoTracking default, the collection is empty unless explicitly `Include(u => u.UserRoles)` is used. Tests query the `UserRoles` table directly or use `Include`.
+
+### Verification
+
+```bash
+# Unit tests
+dotnet test Project.UnitTests
+# Result: 269 passed, 0 failed, 0 skipped
+
+# Application tests (compile-proof stubs)
+dotnet test Project.ApplicationTests
+# Result: 67 passed, 0 failed, 0 skipped
+
+# Integration tests (including MigrationService)
+dotnet test Project.IntegrationTests
+# Result: 85 passed, 0 failed, 0 skipped (74 existing + 11 new)
+
+# MigrationService tests only
+dotnet test Project.IntegrationTests --filter "FullyQualifiedName~MigrationService"
+# Result: 11 passed, 0 failed, 0 skipped
+```
+
+### Deviations from Design
+
+- Integration tests use a shared `MigrationServiceFixture` via collection fixture (not individual `IClassFixture` per test class) to avoid multiple PostgreSQL container instances. Each test calls `ResetDatabaseAsync` in `InitializeAsync` for true cold-start isolation.
+- `GetAppliedMigrationsAsync()` is intentionally not used anywhere in the codebase (only referenced in a comment explaining why). Pending migration count is captured before `MigrateAsync` and used for the success log.
+- Strict re-run snapshot equality test uses `AsTracking()` queries because NoTracking default prevents change-tracker-backed reads.
+- SeedData uses `IPermissionRepository.ListAsync` (new contract) instead of the original `GetByKeyAsync` per-call to avoid N+1. No domain/spec change — purely an Infrastructure/Application contract addition for efficient bulk reads.
+
+### Issues Found
+
+- `GetAppliedMigrationsAsync()` returns empty when called from a fresh `ApplicationDbContext` scope, even when migrations exist in the database. Avoided entirely; pending count captured before migration is used for logging.
+- `EnsureDeletedAsync()` on the test database invalidates the connection pool. Worked around with maintenance-connection drop/recreate + `ClearAllPools`.
+- N+1 in permission seed loop was caught by review; fixed with `ListAsync` bulk method.
+
+### Remaining Tasks
+
+(None — all 16 tasks complete)
+
+### Workload / PR Boundary
+
+- Mode: chained PR slice (feature-branch-chain)
+- Current work unit: PR 3 — MigrationWorker + Wiring + End-to-End
+- Boundary: MigrationWorker BackgroundService, Program.cs host wiring, package reference, IPermissionRepository.ListAsync addition, integration tests (11 tests across 2 test classes), cold-start test isolation
+- Estimated review budget impact: ~400 changed lines for this slice; `size:exception` justified — splitting worker + wiring + test isolation would break the cohesive bootstrap verification
+
+### Status
+
+16/16 tasks complete. Phase 3 fresh review: pass. Ready for verify phase.

@@ -76,6 +76,9 @@ public sealed class RepositoryContractTests
         public Task<bool> ExistsByKeyAsync(PermissionKey key, CancellationToken ct = default) =>
             Task.FromResult(false);
 
+        public Task<IReadOnlyList<Permission>> ListAsync(CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyList<Permission>>(Array.Empty<Permission>());
+
         public Task AddAsync(Permission permission, CancellationToken ct = default) =>
             Task.CompletedTask;
 

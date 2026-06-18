@@ -28,4 +28,10 @@ public sealed class PermissionRepository : BaseRepository<Permission, Permission
     {
         return await Set.AnyAsync(p => p.Key == key, ct);
     }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<Permission>> ListAsync(CancellationToken ct = default)
+    {
+        return await Set.AsNoTracking().ToListAsync(ct);
+    }
 }
