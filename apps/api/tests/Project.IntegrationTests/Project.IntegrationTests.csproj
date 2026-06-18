@@ -33,6 +33,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Project.Api.Controllers\Project.Api.Controllers.csproj" />
+    <ProjectReference Include="..\..\src\Project.MigrationService\Project.MigrationService.csproj" />
   </ItemGroup>
 
 </Project>
