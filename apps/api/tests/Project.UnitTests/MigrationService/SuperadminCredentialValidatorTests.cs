@@ -32,7 +32,7 @@ public class SuperadminCredentialValidatorTests
         var result = SuperadminCredentialValidator.Validate(email, ValidPassword);
 
         Assert.True(result.IsFailure);
-        Assert.Equal("SUPERADMIN_EMAIL_MISSING", result.Error.Code);
+        Assert.Equal(ErrorCodes.Superadmin.EmailMissing, result.Error.Code);
     }
 
     // ── Missing password ──
@@ -46,7 +46,7 @@ public class SuperadminCredentialValidatorTests
         var result = SuperadminCredentialValidator.Validate(ValidEmail, password);
 
         Assert.True(result.IsFailure);
-        Assert.Equal("SUPERADMIN_PASSWORD_MISSING", result.Error.Code);
+        Assert.Equal(ErrorCodes.Superadmin.PasswordMissing, result.Error.Code);
     }
 
     // ── Invalid email format ──
@@ -62,7 +62,7 @@ public class SuperadminCredentialValidatorTests
         var result = SuperadminCredentialValidator.Validate(email, ValidPassword);
 
         Assert.True(result.IsFailure);
-        Assert.Equal("SUPERADMIN_EMAIL_INVALID", result.Error.Code);
+        Assert.Equal(ErrorCodes.Superadmin.EmailInvalid, result.Error.Code);
     }
 
     // ── Password too short ──
@@ -76,7 +76,7 @@ public class SuperadminCredentialValidatorTests
         var result = SuperadminCredentialValidator.Validate(ValidEmail, password);
 
         Assert.True(result.IsFailure);
-        Assert.Equal("SUPERADMIN_PASSWORD_TOO_SHORT", result.Error.Code);
+        Assert.Equal(ErrorCodes.Superadmin.PasswordTooShort, result.Error.Code);
     }
 
     // ── Email normalization ──
@@ -99,6 +99,6 @@ public class SuperadminCredentialValidatorTests
         var result = SuperadminCredentialValidator.Validate(email, ValidPassword);
 
         Assert.True(result.IsFailure);
-        Assert.Equal("SUPERADMIN_EMAIL_INVALID", result.Error.Code);
+        Assert.Equal(ErrorCodes.Superadmin.EmailInvalid, result.Error.Code);
     }
 }

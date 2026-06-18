@@ -25,7 +25,7 @@ public static class SuperadminCredentialValidator
         if (string.IsNullOrWhiteSpace(email))
         {
             return Result<SuperadminCredentials>.Failure(
-                "SUPERADMIN_EMAIL_MISSING",
+                ErrorCodes.Superadmin.EmailMissing,
                 "The SUPERADMIN_EMAIL environment variable is missing or empty. " +
                 "Set it to a valid admin email address before starting the migration service.");
         }
@@ -33,7 +33,7 @@ public static class SuperadminCredentialValidator
         if (string.IsNullOrWhiteSpace(password))
         {
             return Result<SuperadminCredentials>.Failure(
-                "SUPERADMIN_PASSWORD_MISSING",
+                ErrorCodes.Superadmin.PasswordMissing,
                 "The SUPERADMIN_PASSWORD environment variable is missing or empty. " +
                 "Set it to a strong password (minimum 12 characters) before starting the migration service.");
         }
@@ -45,7 +45,7 @@ public static class SuperadminCredentialValidator
         if (trimmedEmail.Any(char.IsWhiteSpace))
         {
             return Result<SuperadminCredentials>.Failure(
-                "SUPERADMIN_EMAIL_INVALID",
+                ErrorCodes.Superadmin.EmailInvalid,
                 $"The SUPERADMIN_EMAIL value '{email}' is not a valid email format. " +
                 "Email values cannot contain whitespace characters.");
         }
@@ -53,7 +53,7 @@ public static class SuperadminCredentialValidator
         if (!trimmedEmail.Contains('@') || trimmedEmail.Count(c => c == '@') > 1)
         {
             return Result<SuperadminCredentials>.Failure(
-                "SUPERADMIN_EMAIL_INVALID",
+                ErrorCodes.Superadmin.EmailInvalid,
                 $"The SUPERADMIN_EMAIL value '{email}' is not a valid email format. " +
                 "Provide a valid email address.");
         }
@@ -62,7 +62,7 @@ public static class SuperadminCredentialValidator
         if (atIndex == 0 || atIndex == trimmedEmail.Length - 1)
         {
             return Result<SuperadminCredentials>.Failure(
-                "SUPERADMIN_EMAIL_INVALID",
+                ErrorCodes.Superadmin.EmailInvalid,
                 $"The SUPERADMIN_EMAIL value '{email}' is not a valid email format. " +
                 "Local and domain parts must be non-empty.");
         }
@@ -71,7 +71,7 @@ public static class SuperadminCredentialValidator
         if (!domainPart.Contains('.'))
         {
             return Result<SuperadminCredentials>.Failure(
-                "SUPERADMIN_EMAIL_INVALID",
+                ErrorCodes.Superadmin.EmailInvalid,
                 $"The SUPERADMIN_EMAIL value '{email}' is not a valid email format. " +
                 "The domain part must include at least one dot.");
         }
@@ -81,7 +81,7 @@ public static class SuperadminCredentialValidator
         if (password.Length < MinimumPasswordLength)
         {
             return Result<SuperadminCredentials>.Failure(
-                "SUPERADMIN_PASSWORD_TOO_SHORT",
+                ErrorCodes.Superadmin.PasswordTooShort,
                 $"The SUPERADMIN_PASSWORD must be at least {MinimumPasswordLength} characters long. " +
                 $"The current value is only {password.Length} character(s).");
         }
