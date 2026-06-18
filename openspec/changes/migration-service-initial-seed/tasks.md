@@ -35,11 +35,12 @@ Chain strategy: feature-branch-chain
 
 ## Phase 2: Core — Seed Components
 
-- [ ] 2.1 Create `SuperadminCredentials` record (Email, PlaintextPassword)
-- [ ] 2.2 Create `SuperadminCredentialValidator` (presence, length≥12, valid email)
-- [ ] 2.3 Create `PermissionCatalog` with 22 static entries (users×7, roles×6, permissions×1, menu×5, auth×3)
-- [ ] 2.4 Create `SeedData.SeedAsync`: idempotent role/permission/user creation via Domain factories, synthetic actorRoles for Superadmin role assignment
-- [ ] 2.5 [TDD-RED→GREEN] `SuperadminCredentialValidatorTests` [Theory]×5
+- [x] 2.1 Create `SuperadminCredentials` record (Email, PlaintextPassword)
+- [x] 2.2 Create `SuperadminCredentialValidator` (presence, length≥12, valid email)
+- [x] 2.3 Create `PermissionCatalog` with 22 static entries (users×7, roles×6, permissions×1, menu×5, auth×3)
+- [x] 2.4 Create `SeedData.SeedAsync`: idempotent role/permission/user creation via Domain factories, synthetic actorRoles for Superadmin role assignment
+- [x] 2.5 [TDD-RED→GREEN] `SuperadminCredentialValidatorTests` [Theory]×8
+- [x] 2.6 [TDD-RED→GREEN] `PermissionCatalogTests` [Fact]×1 (forces static init, validates 22 unique regex-safe keys)
 
 ## Phase 3: Integration — Worker + Wiring + End-to-End
 
