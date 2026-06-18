@@ -21,4 +21,10 @@ public interface IPermissionRepository : IBaseRepository<Permission, PermissionI
     /// Checks whether a permission with the given key already exists.
     /// </summary>
     Task<bool> ExistsByKeyAsync(PermissionKey key, CancellationToken ct = default);
+
+    /// <summary>
+    /// Returns all permissions in a single bulk query. Used by the seed flow to
+    /// avoid N+1 roundtrips when reconciling the permission catalog.
+    /// </summary>
+    Task<IReadOnlyList<Permission>> ListAsync(CancellationToken ct = default);
 }

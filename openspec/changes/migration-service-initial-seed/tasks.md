@@ -44,8 +44,8 @@ Chain strategy: feature-branch-chain
 
 ## Phase 3: Integration — Worker + Wiring + End-to-End
 
-- [ ] 3.1 Create `MigrationWorker` BackgroundService: validate→MigrateAsync→SeedAsync→StopApplication
-- [ ] 3.2 Modify `Program.cs`: AddInfrastructure + MigrationWorker registration + host.Run
-- [ ] 3.3 Add `BCrypt.Net-Next 4.0.3` to `Project.MigrationService.csproj`
-- [ ] 3.4 [TDD-RED→GREEN] `MigrationWorkerTests`: happy path, missing-creds abort, re-run idempotency (PostgreSQL Testcontainers)
-- [ ] 3.5 [TDD-RED→GREEN] `SeedDataTests`: catalog completeness (22 permissions), strict re-run snapshot equality
+- [x] 3.1 Create `MigrationWorker` BackgroundService: validate→MigrateAsync→SeedAsync→StopApplication
+- [x] 3.2 Modify `Program.cs`: AddInfrastructure + MigrationWorker registration + host.Run
+- [x] 3.3 Add `BCrypt.Net-Next 4.0.3` to `Project.MigrationService.csproj`
+- [x] 3.4 [TDD-RED→GREEN] `MigrationWorkerTests`: happy path, missing-creds abort, re-run idempotency (PostgreSQL Testcontainers)
+- [x] 3.5 [TDD-RED→GREEN] `SeedDataTests`: catalog completeness (22 permissions), strict re-run snapshot equality

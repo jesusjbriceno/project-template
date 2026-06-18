@@ -62,16 +62,28 @@ public static class SeedData
         }
 
         // ── 2. Permission catalog (idempotent by key) ──
+        //
+        // Fetch the existing permission set in a single bulk query and build an
+        // in-memory dictionary for O(1) lookups, avoiding the N+1 roundtrip
+        // pattern of querying per catalog entry.
+
+        var existingPermissions = await permissionRepository.ListAsync(ct);
+        var existingPermissionsByKey = existingPermissions.ToDictionary(p => p.Key);
 
         var permissionsByKey = new Dictionary<PermissionKey, Permission>();
         foreach (var entry in PermissionCatalog.All)
         {
-            var permission = await permissionRepository.GetByKeyAsync(entry.Key, ct);
-            if (permission is null)
+            if (!existingPermissionsByKey.TryGetValue(entry.Key, out var permission))
             {
                 permission = Permission.Create(
                     entry.Key, entry.Description, entry.Category, SystemActor, clock);
                 dbContext.Permissions.Add(permission);
+            }
+            else
+            {
+                // Attach the pre-existing entity so subsequent role-permission
+                // wiring works against the tracked instance.
+                dbContext.Attach(permission);
             }
 
             permissionsByKey[entry.Key] = permission;
