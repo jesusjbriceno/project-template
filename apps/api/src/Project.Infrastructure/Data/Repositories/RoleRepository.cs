@@ -29,4 +29,13 @@ public sealed class RoleRepository : BaseRepository<Role, RoleId>, IRoleReposito
             .Where(r => r.IsSystem)
             .ToListAsync(ct);
     }
+
+    /// <inheritdoc />
+    public async Task<Role?> GetByNameAsync(string name, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+
+        return await Set
+            .FirstOrDefaultAsync(r => r.Name == name, ct);
+    }
 }
