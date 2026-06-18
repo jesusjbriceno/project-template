@@ -1,5 +1,13 @@
 ## Verification Report
 
+status: pass
+result: pass
+verdict: pass
+archive_ready: true
+critical_findings: 0
+warnings: 0
+suggestions: 0
+
 **Change**: migration-service-initial-seed  
 **Version**: N/A  
 **Mode**: Standard  
