@@ -9,6 +9,9 @@
 **/bin/
 **/obj/
 
+# ── Tests (not needed for container builds) ──────────────
+apps/api/tests/
+
 # ── IDE ─────────────────────────────────────────────────
 .idea/
 .vs/

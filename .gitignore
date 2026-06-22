@@ -22,6 +22,8 @@ dist/
 
 # ── Docker ──────────────────────────────────────────────
 pgdata/
+docker-compose.local.yml
+docker-compose.local.yaml
 
 # ── IDE ─────────────────────────────────────────────────
 .idea/
