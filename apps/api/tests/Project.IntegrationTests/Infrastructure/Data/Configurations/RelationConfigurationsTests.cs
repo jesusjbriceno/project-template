@@ -11,6 +11,7 @@ namespace Project.IntegrationTests.Infrastructure.Data.Configurations;
 [Collection("Postgres")]
 public sealed class RelationConfigurationsTests : IClassFixture<PostgresFixture>
 {
+    private static readonly UserId _testUserId = UserId.New();
     private readonly PostgresFixture _fixture;
     private readonly IClock _clock = new SystemClock();
     public RelationConfigurationsTests(PostgresFixture f) => _fixture = f;
@@ -169,7 +170,7 @@ public sealed class RelationConfigurationsTests : IClassFixture<PostgresFixture>
     {
         using var s = _fixture.CreateServiceProvider().CreateScope();
         var ctx = s.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var token = RefreshToken.Create(new string('c', 64), Guid.NewGuid(),
+        var token = RefreshToken.Create(_testUserId, new string('c', 64), Guid.NewGuid(),
             _clock.UtcNow.AddDays(7), _clock);
         token.Revoke(_clock);
         ctx.RefreshTokens.Add(token);

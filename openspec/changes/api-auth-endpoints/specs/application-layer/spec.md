@@ -34,7 +34,7 @@ Foundation MUST NOT include: concrete handlers beyond contract proof, EF Core or
 
 ### Requirement: Auth Use-Case Contracts
 
-`LoginCommand`, `RefreshTokenCommand`, `LogoutCommand` SHALL implement `ICommand`. Their handlers SHALL implement `ICommandHandler<T>` and return `Result` or `Result<TokenPairDto>`. Handlers MUST catch `RefreshTokenReuseSignalException` and call `ITokenService.RevokeFamilyAsync(familyId)`. `TokenPairDto` SHALL carry `AccessToken` (string).
+`LoginCommand`, `RefreshTokenCommand`, `LogoutCommand` SHALL implement `ICommand`. Handlers returning `Result<T>` SHALL implement `ICommandHandler<TCommand, TResult>`. Handlers returning `Result` (no value) SHALL implement `ICommandHandler<TCommand>`. Handlers MUST catch `RefreshTokenReuseSignalException` and call `ITokenService.RevokeFamilyAsync(familyId)`. `TokenPairDto` SHALL carry `AccessToken` (string), `ExpiresInSeconds` (int), and `RefreshToken` (string raw value) for the API layer to set the HttpOnly cookie.
 
 #### Scenario: Login handler signature
 

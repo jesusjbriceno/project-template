@@ -40,13 +40,13 @@ Chain strategy: feature-branch-chain
 
 ## Slice 2 — Application Auth Use Cases (PR #2 → PR #1)
 
-- [ ] 2.1 RED: Write `LoginCommandValidatorTests` + `LoginCommandHandlerTests` (success, invalid, blocked, weak pw → same 401)
-- [ ] 2.2 GREEN: Impl `LoginCommand`/`Handler`/`Validator` + `PasswordPolicy` + `TokenPairDto` + `ErrorCodes.Auth` + `IUserRepository.GetByEmailWithRolesAsync`
-- [ ] 2.3 RED: Write `RefreshTokenCommandHandlerTests` (rotation, expired, reuse→family revoke)
-- [ ] 2.4 GREEN: Impl `RefreshTokenCommand`/`Handler`/`Validator` with reuse signal catch
-- [ ] 2.5 RED: Write `LogoutCommandHandlerTests` (success, missing)
-- [ ] 2.6 GREEN: Impl `LogoutCommand`/`Handler`/`Validator`
-- [ ] 2.7 Verify: `dotnet test apps/api` — 10+ handler tests pass
+- [x] 2.1 RED: Write `LoginCommandValidatorTests` + `LoginCommandHandlerTests` (success, invalid, blocked, weak pw → same 401)
+- [x] 2.2 GREEN: Impl `LoginCommand`/`Handler`/`Validator` + `PasswordPolicy` + `TokenPairDto` + `ErrorCodes.Auth` + `IUserRepository.GetByEmailWithRolesAsync`
+- [x] 2.3 RED: Write `RefreshTokenCommandHandlerTests` (rotation, expired, reuse→family revoke)
+- [x] 2.4 GREEN: Impl `RefreshTokenCommand`/`Handler`/`Validator` with reuse signal catch
+- [x] 2.5 RED: Write `LogoutCommandHandlerTests` (success, missing)
+- [x] 2.6 GREEN: Impl `LogoutCommand`/`Handler`/`Validator`
+- [x] 2.7 Verify: `dotnet test apps/api` — 293 UnitTests pass; 101 ApplicationTests pass (67 baseline + 18 Slice 2 + 16 remediation). IntegrationTests now compile after the CS0433 `Program` ambiguity fix; execution is blocked in this Docker SDK environment by Docker-in-Docker/Testcontainers constraints.
 
 ## Slice 3 — API Auth Controller + Integration (PR #3 → PR #2)
 
@@ -59,4 +59,7 @@ Chain strategy: feature-branch-chain
 
 ## Rollback Notes
 
-Each PR independently revertible. #1: revert DI, re-register `NullUserSession`, remove NuGet. #2: delete `Auth/` dir, revert `ErrorCodes` + repo method. #3: revert `Program.cs`, delete controller. No DB rollback — `refresh_tokens` table exists.
+Each PR independently revertible:
+- **PR #1 (Slice 1)**: revert DI, re-register `NullUserSession`, remove NuGet.
+- **PR #2 (Slice 2)**: delete `Auth/` dir, revert `ErrorCodes` + repo method + `ICommandHandlerTResult.cs` + `TokenPairDto` changes. **DB rollback: run `Down` migration (`20260624120000_AddRefreshTokenUserId`) to drop `UserId` column from `refresh_tokens`** (Note: Slice 2 migration deletes all existing refresh_tokens in `Up()`, then adds `UserId NOT NULL`. `Down()` drops the column. No data is lost because refresh tokens are ephemeral.)
+- **PR #3 (Slice 3)**: revert `Program.cs`, delete controller.
