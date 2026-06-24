@@ -50,12 +50,27 @@ Chain strategy: feature-branch-chain
 
 ## Slice 3 — API Auth Controller + Integration (PR #3 → PR #2)
 
-- [ ] 3.1 RED: Write `AuthEndpointsTests` — login 200+cookie, 401 generic, refresh rotation+reuse, logout 204
-- [ ] 3.2 GREEN: Impl `AuthController` (Login/Refresh/Logout) + `LoginRequest`/`TokenResponse` DTOs w/ explicit operators
-- [ ] 3.3 GREEN: Wire `Program.cs` — `AddControllers()`, `UseAuthentication()`, `UseAuthorization()`, cookie config
-- [ ] 3.4 RED: Write `AuthMiddlewareTests` — 401 on missing/invalid access token
-- [ ] 3.5 GREEN: Wire auth middleware pipeline; configure `Secure` policy (`SameAsRequest` dev, `Always` prod)
-- [ ] 3.6 Verify: `dotnet test apps/api` — all integration tests pass
+- [x] 3.1 RED: Write `AuthEndpointsTests` — login 200+cookie, 401 generic, refresh rotation+reuse, logout 204
+- [x] 3.2 GREEN: Impl `AuthController` (Login/Refresh/Logout) + `LoginRequest`/`TokenResponse` DTOs w/ explicit operators
+- [x] 3.3 GREEN: Wire `Program.cs` — `AddControllers()`, `UseAuthentication()`, `UseAuthorization()`, cookie config
+- [x] 3.4 RED: Write `AuthMiddlewareTests` — 401 on missing/invalid access token
+- [x] 3.5 GREEN: Wire auth middleware pipeline; configure `Secure` policy (`SameAsRequest` dev, `Always` prod)
+- [x] 3.6 Verify: `dotnet test apps/api` — unit + application tests pass (394 tests); integration tests compile (0 errors, 0 warnings) but cannot execute due to Testcontainers/Docker-in-Docker privilege limitation.
+
+### Slice 3 Remediation (2026-06-24)
+
+8 review findings fixed:
+
+| # | Severity | Finding | Resolution |
+|---|----------|---------|------------|
+| 1 | CRITICAL | Cookie path `/auth/refresh` breaks logout (browsers won't send cookie to `/auth/logout`) | Changed `Path` to `/auth` in `SetRefreshTokenCookie` and `ClearRefreshTokenCookie`; updated spec, design, proposal, and test assertions |
+| 2 | CRITICAL | `Program.cs` missing `AddAuthorization()` before `UseAuthorization()` | Added `builder.Services.AddAuthorization()` in `Program.cs` |
+| 3 | CRITICAL | Refresh rotation not actually asserted (value not compared) and no reuse-after-rotation test | Added `Assert.NotEqual(oldValue, newValue)` to `Refresh_ValidCookie_Returns200WithRotatedTokens`; added `Refresh_ReuseAfterRotation_Returns401AndClearsCookie` (login → rotate T1→T2 → present T1 → 401, cookie cleared, T2 also invalidated) |
+| 4 | CRITICAL | `/auth/me` is production scope creep for middleware test probing | Removed `GET /auth/me` from production `AuthController`; created `TestAuthController` in integration test project; registered via `AuthWebApplicationFactory.AddApplicationPart()` |
+| 5 | WARNING | Cookie clearing assertions weak (not verifying Max-Age=0, empty value, path consistency) | Added `AssertContainsClearSetCookie` helper: asserts `refreshToken=;`, `Max-Age=0`, and `path=/auth` in Set-Cookie header |
+| 6 | WARNING | Integration tests use shared HttpClient (potential cookie-state dependency) | Each test method now creates its own `using var client = _fixture.CreateClient()` for fresh cookie jar per test |
+| 7 | WARNING | Apply-progress/tasks overstate integration confidence | Artifacts now clearly distinguish "compiled (0 errors)" from "executed (blocked by Docker-in-Docker/Testcontainers)". All counts verified: 293 Unit ✅ + 101 Application ✅ = 394 runnable. 13 Integration tests compile but cannot execute in current environment. |
+| 8 | WARNING | Test JWT secret hardcoded (not clearly named as non-secret test fixture constant) | Extracted `TestJwtSecret` const in `AuthWebApplicationFactory` with doc comment: "Non-secret test fixture constant — used ONLY for integration tests" |
 
 ## Rollback Notes
 
