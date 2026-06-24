@@ -18,7 +18,7 @@ strict_tdd: true
 
 testing:
   strict_tdd_mode: true
-  detected: "2026-06-15"
+  detected: "2026-06-23"
   test_runner:
     command: "dotnet test apps/api"
     framework: "xUnit v2.9.3 + Microsoft.NET.Test.Sdk v17.14.1"
