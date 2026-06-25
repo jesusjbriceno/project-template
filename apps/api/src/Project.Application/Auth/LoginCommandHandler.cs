@@ -19,7 +19,7 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, TokenPai
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IClock _clock;
-    private readonly ITokenService _tokenService;
+    private readonly AuthTokenOptions _authOptions;
 
     public LoginCommandHandler(
         IUserRepository userRepository,
@@ -27,14 +27,14 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, TokenPai
         IJwtTokenService jwtTokenService,
         IRefreshTokenRepository refreshTokenRepository,
         IClock clock,
-        ITokenService tokenService)
+        AuthTokenOptions authOptions)
     {
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         _passwordHasher = passwordHasher ?? throw new ArgumentNullException(nameof(passwordHasher));
         _jwtTokenService = jwtTokenService ?? throw new ArgumentNullException(nameof(jwtTokenService));
         _refreshTokenRepository = refreshTokenRepository ?? throw new ArgumentNullException(nameof(refreshTokenRepository));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-        _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
+        _authOptions = authOptions ?? throw new ArgumentNullException(nameof(authOptions));
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, TokenPai
         var (accessToken, lifetime) = _jwtTokenService.GenerateAccessToken(user, roles);
         var (rawRefresh, refreshHash) = _jwtTokenService.GenerateRefreshToken();
 
-        var refreshExpiry = _clock.UtcNow.AddDays(7); // matches default JwtOptions.RefreshTokenDays
+        var refreshExpiry = _clock.UtcNow.AddDays(_authOptions.RefreshTokenDays);
         var refreshToken = RefreshToken.Create(
             user.Id,
             refreshHash,

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Project.Application.Abstractions.Persistence;
 using Project.Application.Abstractions.Security;
+using Project.Application.Auth;
 using Project.Domain.Common;
 using Project.Infrastructure.Data;
 using Project.Infrastructure.Data.Interceptors;
@@ -100,6 +101,14 @@ public static class DependencyInjection
             .Bind(configuration.GetSection("Jwt"))
             .ValidateDataAnnotations()
             .ValidateOnStart();
+
+        // Application-owned token lifetime options — mapped from Infrastructure JWT options
+        // so Application handlers do not depend on Infrastructure configuration types.
+        services.AddSingleton(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<JwtOptions>>().Value;
+            return new AuthTokenOptions { RefreshTokenDays = options.RefreshTokenDays };
+        });
 
         // IJwtTokenService — singleton because it holds the signing key (derived from JwtOptions)
         // and JwtSecurityTokenHandler is thread-safe
