@@ -2,7 +2,7 @@
 
 Full-stack monorepo template: .NET 10 API + React TypeScript frontend, Docker-ready.
 
-**Current phase**: Domain, Application, and Infrastructure EF Core foundations are complete. The selected next feature is `MigrationService + initial seed`: apply EF Core migrations and seed system roles, permissions, and the initial Superadmin. Frontend is still a static placeholder — React/Vite app with TanStack Router arrives in a later phase.
+**Current phase**: Domain, Application, Infrastructure EF Core, and MigrationService initial seed are complete. The next backend area is API auth endpoints / controllers. Frontend is still a static placeholder — React/Vite app with TanStack Router arrives in a later phase.
 
 ## Quick Start
 
@@ -18,6 +18,7 @@ curl http://localhost:8080/health
 # → Healthy
 
 # Frontend placeholder (static HTML until Phase 9)
+# Default is port 3000; if WEB_PORT is set in .env, use that value instead.
 curl http://localhost:3000
 ```
 
@@ -45,7 +46,7 @@ Domain → Application → Infrastructure → API / MigrationService
 - **Application**: Use cases, CQRS handlers, validators (FluentValidation), interfaces.
 - **Infrastructure**: EF Core, repositories, migrations, external services.
 - **API (Controllers/Endpoints)**: HTTP layer, auth middleware, request/response mapping.
-- **MigrationService**: Schema migrations and seed execution (runs and exits). The service exists as the deployment boundary; wiring real EF Core migration execution and initial seed data is the selected next feature.
+- **MigrationService**: Applies EF Core migrations and seeds system roles, permissions, and the initial Superadmin at startup (runs and exits).
 
 ### Constraints
 
@@ -109,7 +110,7 @@ cp .env.example .env
 | `POSTGRES_USER` | Database user (default: `postgres`) |
 | `POSTGRES_PASSWORD` | Database password (default: `dev_password_change_me` — change for production) |
 | `ConnectionStrings__DefaultConnection` | EF Core connection string |
-| `SUPERADMIN_EMAIL` | Initial superadmin email — reserved for the selected MigrationService seed feature |
-| `SUPERADMIN_PASSWORD` | Initial superadmin password — reserved for the selected MigrationService seed feature |
+| `SUPERADMIN_EMAIL` | Initial superadmin email — used by MigrationService seed |
+| `SUPERADMIN_PASSWORD` | Initial superadmin password — used by MigrationService seed |
 
-> **Next feature:** `MigrationService + initial seed` will make the migration service apply EF Core migrations and seed system roles, permissions, and the initial Superadmin using the reserved `SUPERADMIN_*` variables.
+> **Next backend area:** API auth endpoints / controllers.

@@ -12,7 +12,7 @@ This roadmap tracks the implementation state of the base project. It is updated 
 | Domain model implementation | ✅ Done | All 6 slices complete and archived. 26/26 tasks done. 241 tests green. BCL-only verified. |
 | Application layer | ✅ Archived | Source-of-truth spec exists at `openspec/specs/application-layer/spec.md`; audit trail archived under `openspec/changes/archive/2026-06-15-application-layer/`. |
 | Infrastructure EF Core | ✅ Archived | Source-of-truth spec exists at `openspec/specs/infrastructure-ef-core/spec.md`; audit trail archived under `openspec/changes/archive/2026-06-17-infrastructure-ef-core/`. |
-| MigrationService + initial seed | 🔵 Selected next | Next feature: apply EF Core migrations at startup and seed system roles, permissions, and initial Superadmin. |
+| MigrationService + initial seed | ✅ Done/Archived | 17/17 tasks complete, 421/421 tests green. Archived under `openspec/changes/archive/2026-06-18-migration-service-initial-seed/`. |
 
 ## Domain Model Slices
 
@@ -34,7 +34,8 @@ This roadmap tracks the implementation state of the base project. It is updated 
 5. ✅ Domain-model verified, archived, and main spec synced.
 6. ✅ Application layer verified, archived, and main spec synced.
 7. ✅ Infrastructure EF Core verified, archived, merged to `develop`, and main spec synced.
-8. 🔵 Selected next feature: MigrationService + initial seed — apply migrations and seed system roles, permissions, and initial Superadmin.
+8. ✅ MigrationService + initial seed implemented, verified, and archived. Docker deployment config validated on Ubuntu ARM VPS (db healthy, migration exits 0, api healthy on 8080, web on configurable WEB_PORT).
+9. 🔵 Next: API Auth endpoints / controllers.
 
 ## Backlog by Phase
 
@@ -63,17 +64,17 @@ This roadmap tracks the implementation state of the base project. It is updated 
 - ✅ Typed ID conversions.
 - ✅ Migration creation.
 - ✅ Repository implementations.
-- ⬜ Seed system roles, permissions, and initial Superadmin.
+- ✅ Seed system roles, permissions, and initial Superadmin.
 
 ### Migration Strategy
 
 - ✅ Keep dedicated `MigrationService` for controlled deployments.
 - ✅ Allow API startup migrations/seeds only for Local/Development convenience, gated by configuration.
-- 🔵 Implement real MigrationService + initial seed as the selected next feature.
+- ✅ Implement real MigrationService + initial seed.
 
 ### API
 
-- ⬜ Auth endpoints.
+- 🔵 Auth endpoints — selected next.
 - ⬜ Users/Roles/Permissions controllers.
 - ⬜ Permission authorization policies.
 - ⬜ ProblemDetails/Result mapping.
