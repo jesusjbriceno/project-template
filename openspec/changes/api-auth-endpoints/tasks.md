@@ -36,7 +36,7 @@ Chain strategy: feature-branch-chain
 - [x] 1.6 GREEN: Impl `TokenService : ITokenService` adapter; wire in DI
 - [x] 1.7 Add JwtBearer auth handler + options binding in `DependencyInjection.cs`
 - [x] 1.8 Update `.env.example` — `Jwt__Secret`, `Jwt__Issuer`, `Jwt__Audience`, `Jwt__RefreshTokenDays` (double-underscore convention for `Jwt:*` section binding)
-- [x] 1.9 Verify: `dotnet test apps/api` — Unit (293 pass) and Application (67 pass) all green, no regressions; IntegrationTests blocked by pre-existing CS0433 `Program` type ambiguity (not caused by this change). Full `dotnet test apps/api` cannot run until CS0433 is resolved.
+- [x] 1.9 Verify: `dotnet test apps/api` — Unit (293 pass) and Application (67 pass) all green, no regressions. Historical Slice 1 note: IntegrationTests were blocked at that point by a pre-existing CS0433 `Program` type ambiguity, later resolved before final Slice 3 verification.
 
 ## Slice 2 — Application Auth Use Cases (PR #2 → PR #1)
 
@@ -46,7 +46,7 @@ Chain strategy: feature-branch-chain
 - [x] 2.4 GREEN: Impl `RefreshTokenCommand`/`Handler`/`Validator` with reuse signal catch
 - [x] 2.5 RED: Write `LogoutCommandHandlerTests` (success, missing)
 - [x] 2.6 GREEN: Impl `LogoutCommand`/`Handler`/`Validator`
-- [x] 2.7 Verify: `dotnet test apps/api` — 293 UnitTests pass; 101 ApplicationTests pass (67 baseline + 18 Slice 2 + 16 remediation). IntegrationTests now compile after the CS0433 `Program` ambiguity fix; execution is blocked in this Docker SDK environment by Docker-in-Docker/Testcontainers constraints.
+- [x] 2.7 Verify: `dotnet test apps/api` — 293 UnitTests pass; 101 ApplicationTests pass (67 baseline + 18 Slice 2 + 16 remediation). Historical Slice 2 note: IntegrationTests compiled after the CS0433 `Program` ambiguity fix but were not yet executed until the later VPS host-Docker verification recorded in Slice 3.
 
 ## Slice 3 — API Auth Controller + Integration (PR #3 → PR #2)
 
@@ -55,7 +55,7 @@ Chain strategy: feature-branch-chain
 - [x] 3.3 GREEN: Wire `Program.cs` — `AddControllers()`, `UseAuthentication()`, `UseAuthorization()`, cookie config
 - [x] 3.4 RED: Write `AuthMiddlewareTests` — 401 on missing/invalid access token
 - [x] 3.5 GREEN: Wire auth middleware pipeline; configure `Secure` policy (`SameAsRequest` dev, `Always` prod)
-- [x] 3.6 Verify: `dotnet test apps/api` — unit + application tests pass (394 tests); integration tests compile (0 errors, 0 warnings) but cannot execute due to Testcontainers/Docker-in-Docker privilege limitation.
+- [x] 3.6 Verify: `dotnet test apps/api` — unit + application tests pass (394 tests). Full IntegrationTests executed on the VPS through a Docker SDK container with the host Docker socket: 103 passed, 0 failed, 0 skipped.
 
 ### Slice 3 Remediation (2026-06-24)
 
@@ -69,7 +69,7 @@ Chain strategy: feature-branch-chain
 | 4 | CRITICAL | `/auth/me` is production scope creep for middleware test probing | Removed `GET /auth/me` from production `AuthController`; created `TestAuthController` in integration test project; registered via `AuthWebApplicationFactory.AddApplicationPart()` |
 | 5 | WARNING | Cookie clearing assertions weak (not verifying Max-Age=0, empty value, path consistency) | Added `AssertContainsClearSetCookie` helper: asserts `refreshToken=;`, `Max-Age=0`, and `path=/auth` in Set-Cookie header |
 | 6 | WARNING | Integration tests use shared HttpClient (potential cookie-state dependency) | Each test method now creates its own `using var client = _fixture.CreateClient()` for fresh cookie jar per test |
-| 7 | WARNING | Apply-progress/tasks overstate integration confidence | Artifacts now clearly distinguish "compiled (0 errors)" from "executed (blocked by Docker-in-Docker/Testcontainers)". All counts verified: 293 Unit ✅ + 101 Application ✅ = 394 runnable. 13 Integration tests compile but cannot execute in current environment. |
+| 7 | WARNING | Apply-progress/tasks overstate integration confidence | Artifacts now record final VPS runtime evidence: 293 Unit ✅ + 101 Application ✅ + 103 Integration ✅ = 497 tests passing. Integration tests execute on the VPS through a Docker SDK container with the host Docker socket. |
 | 8 | WARNING | Test JWT secret hardcoded (not clearly named as non-secret test fixture constant) | Extracted `TestJwtSecret` const in `AuthWebApplicationFactory` with doc comment: "Non-secret test fixture constant — used ONLY for integration tests" |
 
 ## Rollback Notes
