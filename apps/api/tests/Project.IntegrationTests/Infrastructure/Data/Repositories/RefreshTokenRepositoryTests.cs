@@ -11,6 +11,7 @@ namespace Project.IntegrationTests.Infrastructure.Data.Repositories;
 [Collection("Postgres")]
 public sealed class RefreshTokenRepositoryTests : IClassFixture<PostgresFixture>
 {
+    private static readonly UserId _testUserId = UserId.New();
     private readonly PostgresFixture _fixture;
     public RefreshTokenRepositoryTests(PostgresFixture fixture) => _fixture = fixture;
 
@@ -36,7 +37,7 @@ public sealed class RefreshTokenRepositoryTests : IClassFixture<PostgresFixture>
         var (ctx, repo) = await Setup();
         var clock = new SystemClock();
         var hash = Hash(1);
-        ctx.RefreshTokens.Add(RefreshToken.Create(hash, Guid.NewGuid(), clock.UtcNow.AddDays(7), clock));
+        ctx.RefreshTokens.Add(RefreshToken.Create(_testUserId, hash, Guid.NewGuid(), clock.UtcNow.AddDays(7), clock));
         await ctx.SaveChangesAsync();
         ctx.ChangeTracker.Clear();
         var found = await repo.GetByTokenHashAsync(hash);
@@ -60,10 +61,10 @@ public sealed class RefreshTokenRepositoryTests : IClassFixture<PostgresFixture>
         var clock = new SystemClock();
         var fid = Guid.NewGuid();
         var future = clock.UtcNow.AddDays(7);
-        var active = RefreshToken.Create(Hash(10), fid, future, clock);
-        var revoked = RefreshToken.Create(Hash(11), fid, future, clock);
+        var active = RefreshToken.Create(_testUserId, Hash(10), fid, future, clock);
+        var revoked = RefreshToken.Create(_testUserId, Hash(11), fid, future, clock);
         revoked.Revoke(clock);
-        var expired = RefreshToken.Create(Hash(12), fid, clock.UtcNow.AddDays(-1), clock);
+        var expired = RefreshToken.Create(_testUserId, Hash(12), fid, clock.UtcNow.AddDays(-1), clock);
         ctx.RefreshTokens.AddRange(active, revoked, expired);
         await ctx.SaveChangesAsync();
         ctx.ChangeTracker.Clear();
@@ -79,8 +80,8 @@ public sealed class RefreshTokenRepositoryTests : IClassFixture<PostgresFixture>
         var (ctx, repo) = await Setup();
         var clock = new SystemClock();
         var future = clock.UtcNow.AddDays(7);
-        var ta = RefreshToken.Create(Hash(20), Guid.NewGuid(), future, clock);
-        ctx.RefreshTokens.AddRange(ta, RefreshToken.Create(Hash(21), Guid.NewGuid(), future, clock));
+        var ta = RefreshToken.Create(_testUserId, Hash(20), Guid.NewGuid(), future, clock);
+        ctx.RefreshTokens.AddRange(ta, RefreshToken.Create(_testUserId, Hash(21), Guid.NewGuid(), future, clock));
         await ctx.SaveChangesAsync();
         ctx.ChangeTracker.Clear();
         Assert.Single(await repo.GetActiveByFamilyIdAsync(ta.FamilyId));
@@ -95,8 +96,8 @@ public sealed class RefreshTokenRepositoryTests : IClassFixture<PostgresFixture>
         var fid = Guid.NewGuid();
         var future = clock.UtcNow.AddDays(7);
         ctx.RefreshTokens.AddRange(
-            RefreshToken.Create(Hash(30), fid, future, clock),
-            RefreshToken.Create(Hash(31), fid, future, clock));
+            RefreshToken.Create(_testUserId, Hash(30), fid, future, clock),
+            RefreshToken.Create(_testUserId, Hash(31), fid, future, clock));
         await ctx.SaveChangesAsync();
         ctx.ChangeTracker.Clear();
         await repo.RevokeFamilyAsync(fid);
@@ -112,8 +113,8 @@ public sealed class RefreshTokenRepositoryTests : IClassFixture<PostgresFixture>
         var (ctx, repo) = await Setup();
         var clock = new SystemClock();
         var future = clock.UtcNow.AddDays(7);
-        var ta = RefreshToken.Create(Hash(40), Guid.NewGuid(), future, clock);
-        ctx.RefreshTokens.AddRange(ta, RefreshToken.Create(Hash(41), Guid.NewGuid(), future, clock));
+        var ta = RefreshToken.Create(_testUserId, Hash(40), Guid.NewGuid(), future, clock);
+        ctx.RefreshTokens.AddRange(ta, RefreshToken.Create(_testUserId, Hash(41), Guid.NewGuid(), future, clock));
         await ctx.SaveChangesAsync();
         ctx.ChangeTracker.Clear();
         await repo.RevokeFamilyAsync(ta.FamilyId);

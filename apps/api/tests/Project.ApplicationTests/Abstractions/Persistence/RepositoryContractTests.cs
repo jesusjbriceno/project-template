@@ -23,6 +23,14 @@ public sealed class RepositoryContractTests
         public Task<User?> GetByEmailAsync(Email email, CancellationToken ct = default) =>
             Task.FromResult<User?>(null);
 
+        public Task<(User? User, IReadOnlyCollection<Role> Roles)> GetByIdWithRolesAsync(
+            UserId id, CancellationToken ct = default) =>
+            Task.FromResult<(User?, IReadOnlyCollection<Role>)>((null, Array.Empty<Role>()));
+
+        public Task<(User? User, IReadOnlyCollection<Role> Roles)> GetByEmailWithRolesAsync(
+            Email email, CancellationToken ct = default) =>
+            Task.FromResult<(User?, IReadOnlyCollection<Role>)>((null, Array.Empty<Role>()));
+
         public Task<bool> ExistsAsync(UserId id, CancellationToken ct = default) =>
             Task.FromResult(false);
 

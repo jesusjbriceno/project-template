@@ -1,6 +1,12 @@
+extern alias ApiControllers;
+
 using System.Net;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
+
+// ApiControllers::Program resolves the CS0433 ambiguity caused by both
+// Project.Api.Controllers and Project.MigrationService exposing a Program type.
+using ApiProgram = ApiControllers::Program;
 
 namespace Project.IntegrationTests;
 
@@ -10,11 +16,11 @@ namespace Project.IntegrationTests;
 /// second test asserts the health response body is the expected
 /// "Healthy" string from the built-in health check service.
 /// </summary>
-public sealed class HealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class HealthEndpointTests : IClassFixture<WebApplicationFactory<ApiProgram>>
 {
     private readonly HttpClient _client;
 
-    public HealthEndpointTests(WebApplicationFactory<Program> factory)
+    public HealthEndpointTests(WebApplicationFactory<ApiProgram> factory)
     {
         _client = factory.CreateClient();
     }
