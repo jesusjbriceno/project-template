@@ -607,3 +607,138 @@ None — all 22 tasks across all 3 slices are complete. 8 Slice 3 review finding
 - **Target**: PR #2 branch `feature/api-auth-endpoints-02-use-cases`
 - **Boundary**: Slice 3 implemented + 8 review findings fixed. Build green with 394 runnable tests (293 Unit + 101 Application). 13 Integration tests compile (0 errors) but cannot execute without privileged Docker access.
 - **Status**: Ready for verify
+
+---
+
+# Apply Progress: API Authentication Endpoints — VPS Runtime Verification (2026-06-25)
+
+**Date**: 2026-06-25
+**Branch**: `feature/api-auth-endpoints-03-api-controller`
+**Scope**: Test-only fix to enable auth integration test execution on VPS with host Docker socket access.
+
+## Fixes Applied
+
+### Fix 1: AuthTestFixture — Environment Variable for Connection String
+
+**Problem**: `Program.cs` reads `ConnectionStrings:DefaultConnection` via `builder.Configuration.GetConnectionString("DefaultConnection")` before `WebApplicationFactory.ConfigureAppConfiguration` applies overrides. In a Docker SDK environment where no default connection string exists, this causes `InvalidOperationException` during fixture initialization.
+
+**Solution**: In `AuthTestFixture.InitializeAsync()`, set `ConnectionStrings__DefaultConnection` as a process-level environment variable BEFORE creating `AuthWebApplicationFactory`. The double-underscore convention maps to the `ConnectionStrings:DefaultConnection` configuration key and is picked up by the default environment-variables configuration provider before `Program.cs` runs.
+
+**Cleanup**: In `AuthTestFixture.DisposeAsync()`, restore the previously observed `ConnectionStrings__DefaultConnection` value to prevent leakage across test fixture runs and preserve any caller-provided environment configuration.
+
+**File changed**: `tests/Project.IntegrationTests/Auth/AuthTestFixture.cs`
+
+### Fix 2: AuthEndpointsTests — Case-Insensitive Cookie Assertions
+
+**Problem**: `Login_ValidCredentials_Returns200WithAccessTokenAndCookie` asserted cookie attributes (`HttpOnly`, `SameSite=Strict`, `Max-Age=`) using case-sensitive `Assert.Contains`. ASP.NET Core's `SetCookieHeaderValue` serializes these attributes in lowercase (`httponly`, `samesite=strict`, `max-age=`). This caused the test to fail on the first VPS execution despite the controller correctly setting all cookie options.
+
+**Solution**: Changed cookie attribute assertions to use `StringComparison.OrdinalIgnoreCase`.
+
+**File changed**: `tests/Project.IntegrationTests/Auth/AuthEndpointsTests.cs`
+
+## VPS Execution Evidence
+
+### Command
+
+```bash
+docker run --rm --network host \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -e TESTCONTAINERS_RYUK_DISABLED=true \
+  -e DOCKER_HOST=unix:///var/run/docker.sock \
+  -v "$(pwd)/apps/api:/src" -w /src \
+  mcr.microsoft.com/dotnet/sdk:10.0 \
+  dotnet test tests/Project.IntegrationTests/Project.IntegrationTests.csproj \
+  --filter "FullyQualifiedName~Project.IntegrationTests.Auth" --verbosity normal
+```
+
+### Auth Integration Tests Result
+
+| Test Project | Pass | Fail | Skip | Status |
+|-------------|------|------|------|--------|
+| `Project.IntegrationTests` (auth filter) | 13 | 0 | 0 | **All pass** |
+
+**All 13 auth integration tests passed**:
+- `AuthEndpointsTests` (9 tests): login 200+cookie, login 401 generic, login 401 nonexistent, refresh 200 rotated, refresh 400 missing, refresh 401 revoked, refresh 401 reuse, logout 204, logout 400 missing
+- `AuthMiddlewareTests` (4 tests): no token 401, invalid token 401, valid token 200, tampered token 401
+
+### Full IntegrationTests Suite Result
+
+| Test Project | Pass | Fail | Skip | Status |
+|-------------|------|------|------|--------|
+| `Project.IntegrationTests` (full suite) | 103 | 0 | 0 | **All pass** |
+
+**Command**:
+```bash
+docker run --rm --network host \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -e TESTCONTAINERS_RYUK_DISABLED=true \
+  -e DOCKER_HOST=unix:///var/run/docker.sock \
+  -v "/home/ubuntu/wf/project-template/apps/api:/src" -w /src \
+  mcr.microsoft.com/dotnet/sdk:10.0 \
+  dotnet test tests/Project.IntegrationTests/Project.IntegrationTests.csproj --verbosity normal
+```
+
+**Result**: Total tests: 103. Passed: 103. Failed: 0. Skipped: 0. Build warnings: 0. Build errors: 0. Total time: ~53.5 s.
+
+**Historical note**: The first VPS run on 2026-06-25 reported 2 `HealthEndpointTests` failures due to a missing `ConnectionStrings:DefaultConnection` configuration. This was a pre-existing structural gap in the plain `WebApplicationFactory<ApiProgram>` used by those tests, not caused by auth changes. The connection string is now available in the test environment, and the full suite passes.
+
+### Test-Only Fix: Tampered Token Assertion
+
+`AuthMiddlewareTests.TamperedToken_Returns401` was refined to mutate the first character of the JWT signature segment (third segment) rather than the final token character. This avoids base64url padding-bit ambiguity and ensures the decoded signature bytes change. No production code was changed.
+
+## Remaining Blockers
+
+None. All 22 tasks complete; all 103 integration tests pass.
+
+## Files Changed (This Run)
+
+| File | Action | What Was Done |
+|------|--------|---------------|
+| `tests/Project.IntegrationTests/Auth/AuthTestFixture.cs` | Modified | Set `ConnectionStrings__DefaultConnection` env var before factory creation; restore previous value on dispose |
+| `tests/Project.IntegrationTests/Auth/AuthEndpointsTests.cs` | Modified | Cookie attribute assertions now case-insensitive (`OrdinalIgnoreCase`) |
+| `tests/Project.IntegrationTests/Auth/AuthMiddlewareTests.cs` | Modified | `TamperedToken_Returns401` mutates signature segment instead of payload for reliable middleware rejection |
+
+## Status
+
+**Full IntegrationTests suite is green: 103/103 passed. All 13 auth integration tests and 90 existing integration tests pass. Total suite: 497 tests passing (293 Unit + 101 Application + 103 Integration).**
+
+---
+
+# Apply Progress: API Authentication Endpoints — Pre-Commit Review Remediation (2026-06-25)
+
+**Date**: 2026-06-25
+**Branch**: `feature/api-auth-endpoints-03-api-controller`
+**Scope**: Fix 2 blockers identified by pre-commit review.
+
+## Blocker 1: Env-Var Isolation in AuthTestFixture
+
+**Finding**: `AuthTestFixture.InitializeAsync()` set `ConnectionStrings__DefaultConnection` at process level without saving the previous value. `DisposeAsync()` cleared it to `null` instead of restoring the previous value. This is global mutable state; xUnit test discovery or any code running after fixture disposal would see a corrupted environment.
+
+**Fix**: 
+- `InitializeAsync()` now saves `Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")` before setting the test value (matching `HealthWebApplicationFactory`'s pattern).
+- `DisposeAsync()` restores the previous value via `Environment.SetEnvironmentVariable(..., _previousConnectionString, Process)` instead of setting to `null`.
+
+**File changed**: `tests/Project.IntegrationTests/Auth/AuthTestFixture.cs`
+
+**Parallelization**: The IntegrationTests assembly already disables parallelization via `xunit.runner.json` (`parallelizeTestCollections: false`, `maxParallelThreads: 1`). Both env-var isolation AND serial execution are now guaranteed.
+
+## Blocker 2: Stale Contradictory Suggestion in verify-report.md
+
+**Finding**: `verify-report.md` section "Resolved" (line 244) documented that `HealthEndpointTests` now pass and use `HealthWebApplicationFactory`. But section "SUGGESTION" (line 252) still recommended "Fix `HealthEndpointTests` — Either create a custom `WebApplicationFactory`…" — contradicting the resolved status.
+
+**Fix**: Removed stale suggestion #1. HealthEndpointTests are already resolved (custom `HealthWebApplicationFactory` exists, tests pass at 103/103). Renumbered remaining suggestions.
+
+**File changed**: `openspec/changes/api-auth-endpoints/verify-report.md`
+
+## Verification Results (Post-Fix)
+
+| Test Project | Pass | Fail | Skip | Status |
+|-------------|------|------|------|--------|
+| `Project.UnitTests` | 293 | 0 | 0 | ✅ All pass (no regressions) |
+| `Project.ApplicationTests` | 101 | 0 | 0 | ✅ All pass (no regressions) |
+| `Project.IntegrationTests` (build) | — | 0 | — | ✅ Build succeeds (0 errors, 0 warnings) |
+| `Project.IntegrationTests` (run) | 103 | 0 | 0 | ✅ All pass via Docker/Testcontainers on VPS |
+
+## Status
+
+Pre-commit review blockers resolved. Final verification is green: 497 total tests pass (293 Unit + 101 Application + 103 Integration). Ready for commit review.

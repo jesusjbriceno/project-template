@@ -31,6 +31,7 @@ public sealed class AuthTestFixture : IAsyncLifetime
     public const string TestUserPassword = "StrongP@ssw0rd!";
 
     private readonly PostgreSqlContainer _container;
+    private string? _previousConnectionString;
 
     public AuthTestFixture()
     {
@@ -73,11 +74,29 @@ public sealed class AuthTestFixture : IAsyncLifetime
         context.Set<User>().Add(user);
         await context.SaveChangesAsync();
 
+        // Save the previous value so we can restore it on dispose, preventing
+        // leakage of process-wide environment state across test fixture runs
+        // (critical in environments where other tests depend on the original value).
+        _previousConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+
+        // Set the connection string as an environment variable BEFORE creating the factory.
+        // Program.cs reads ConnectionStrings:DefaultConnection via builder.Configuration
+        // before WebApplicationFactory.ConfigureAppConfiguration applies overrides.
+        // The double-underscore convention maps to the "DefaultConnection" key under
+        // "ConnectionStrings" in .NET configuration.
+        Environment.SetEnvironmentVariable("ConnectionStrings__DefaultConnection", connectionString, EnvironmentVariableTarget.Process);
+
         // Create the factory AFTER seeding
         _factory = new AuthWebApplicationFactory(connectionString);
     }
 
-    public async Task DisposeAsync() => await _container.DisposeAsync();
+    public async Task DisposeAsync()
+    {
+        // Restore the previous environment variable value so this fixture does not
+        // mutate process-wide state for other tests or subsequent test runs.
+        Environment.SetEnvironmentVariable("ConnectionStrings__DefaultConnection", _previousConnectionString, EnvironmentVariableTarget.Process);
+        await _container.DisposeAsync();
+    }
 
     private AuthWebApplicationFactory? _factory;
 

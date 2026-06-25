@@ -16,11 +16,11 @@ namespace Project.IntegrationTests;
 /// second test asserts the health response body is the expected
 /// "Healthy" string from the built-in health check service.
 /// </summary>
-public sealed class HealthEndpointTests : IClassFixture<WebApplicationFactory<ApiProgram>>
+public sealed class HealthEndpointTests : IClassFixture<HealthWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public HealthEndpointTests(WebApplicationFactory<ApiProgram> factory)
+    public HealthEndpointTests(HealthWebApplicationFactory factory)
     {
         _client = factory.CreateClient();
     }

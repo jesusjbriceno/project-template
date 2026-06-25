@@ -58,10 +58,10 @@ public sealed class AuthEndpointsTests : IClassFixture<AuthTestFixture>
         var setCookieHeaders = response.Headers.GetValues("Set-Cookie").ToList();
         Assert.Contains(setCookieHeaders, h => h.StartsWith("refreshToken=", StringComparison.OrdinalIgnoreCase));
         var cookieHeader = setCookieHeaders.First(h => h.StartsWith("refreshToken=", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains("HttpOnly", cookieHeader);
-        Assert.Contains("SameSite=Strict", cookieHeader);
+        Assert.Contains("HttpOnly", cookieHeader, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("SameSite=Strict", cookieHeader, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("path=/auth", cookieHeader, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Max-Age=", cookieHeader);
+        Assert.Contains("Max-Age=", cookieHeader, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

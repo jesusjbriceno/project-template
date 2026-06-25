@@ -101,8 +101,15 @@ public sealed class AuthMiddlewareTests : IClassFixture<AuthTestFixture>
         var body = await loginResponse.Content.ReadFromJsonAsync<TokenResponseContract>();
         Assert.NotNull(body);
 
-        // Tamper with the last character of the token → invalid signature → 401
-        var tamperedToken = body!.AccessToken[..^1] + (body.AccessToken[^1] == 'A' ? 'B' : 'A');
+        // Tamper with the first character of the signature segment. Changing the
+        // final base64url character can affect only padding bits for some lengths,
+        // which may leave the decoded signature bytes unchanged.
+        var tokenParts = body!.AccessToken.Split('.');
+        Assert.Equal(3, tokenParts.Length);
+        Assert.False(string.IsNullOrWhiteSpace(tokenParts[2]));
+
+        var tamperedSignature = (tokenParts[2][0] == 'A' ? 'B' : 'A') + tokenParts[2][1..];
+        var tamperedToken = string.Join('.', tokenParts[0], tokenParts[1], tamperedSignature);
 
         // ACT
         var request = new HttpRequestMessage(HttpMethod.Get, "/test-auth/protected");
