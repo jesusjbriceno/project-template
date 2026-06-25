@@ -22,19 +22,22 @@ public sealed class RefreshTokenCommandHandler : ICommandHandler<RefreshTokenCom
     private readonly IClock _clock;
     private readonly ITokenService _tokenService;
     private readonly IUserRepository _userRepository;
+    private readonly AuthTokenOptions _authOptions;
 
     public RefreshTokenCommandHandler(
         IRefreshTokenRepository refreshTokenRepository,
         IJwtTokenService jwtTokenService,
         IClock clock,
         ITokenService tokenService,
-        IUserRepository userRepository)
+        IUserRepository userRepository,
+        AuthTokenOptions authOptions)
     {
         _refreshTokenRepository = refreshTokenRepository ?? throw new ArgumentNullException(nameof(refreshTokenRepository));
         _jwtTokenService = jwtTokenService ?? throw new ArgumentNullException(nameof(jwtTokenService));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+        _authOptions = authOptions ?? throw new ArgumentNullException(nameof(authOptions));
     }
 
     /// <summary>
@@ -79,7 +82,7 @@ public sealed class RefreshTokenCommandHandler : ICommandHandler<RefreshTokenCom
 
         // ── Rotate: generate new token and replace current ──
         var (newRaw, newHash) = _jwtTokenService.GenerateRefreshToken();
-        var newExpiry = _clock.UtcNow.AddDays(7);
+        var newExpiry = _clock.UtcNow.AddDays(_authOptions.RefreshTokenDays);
 
         RefreshToken newToken;
         try

@@ -21,7 +21,7 @@ public interface IUserRepository : IBaseRepository<User, UserId>
     /// Retrieves a user by email with their current roles.
     /// Since <see cref="UserRole"/> has no navigation to <see cref="Role"/>,
     /// the Infrastructure layer uses an explicit join/include to populate both.
-    /// Returns null for both when the user is not found.
+    /// Returns null user with empty roles when the user is not found.
     /// </summary>
     Task<(User? User, IReadOnlyCollection<Role> Roles)> GetByEmailWithRolesAsync(
         Email email, CancellationToken ct = default);

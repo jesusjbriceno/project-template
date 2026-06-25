@@ -8,7 +8,7 @@ namespace Project.Application.Auth;
 
 /// <summary>
 /// Handles logout: looks up the refresh token by hash, revokes it,
-/// and triggers family-wide revocation via <see cref="ITokenService.RevokeFamilyAsync"/>.
+/// and triggers family-wide revocation via <see cref="IRefreshTokenRepository.RevokeFamilyAsync"/>.
 /// Idempotent — already revoked or missing tokens return success.
 /// </summary>
 public sealed class LogoutCommandHandler : ICommandHandler<LogoutCommand>

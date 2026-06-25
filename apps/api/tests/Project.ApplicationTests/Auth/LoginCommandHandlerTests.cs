@@ -11,6 +11,8 @@ namespace Project.ApplicationTests.Auth;
 
 public sealed class LoginCommandHandlerTests
 {
+    private static readonly AuthTokenOptions DefaultOptions = new() { RefreshTokenDays = 7 };
+
     // ─────────────── Success ───────────────
 
     [Fact]
@@ -34,8 +36,7 @@ public sealed class LoginCommandHandlerTests
             RefreshHash = "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
         };
         var refreshRepo = new FakeRefreshTokenRepository();
-        var tokenSvc = new FakeTokenService();
-        var handler = new LoginCommandHandler(repo, hasher, jwt, refreshRepo, clock, tokenSvc);
+        var handler = new LoginCommandHandler(repo, hasher, jwt, refreshRepo, clock, DefaultOptions);
         var command = new LoginCommand("test@example.com", "StrongP@ss1!");
 
         // ACT
@@ -155,6 +156,32 @@ public sealed class LoginCommandHandlerTests
         Assert.Equal(ErrorCodes.Auth.InvalidCredentials, result.Error.Code);
     }
 
+    // ─────────────── Configurable refresh token expiry ───────────────
+
+    [Fact]
+    public async Task Handle_ConfigurableRefreshTokenExpiry_UsesAuthTokenOptions()
+    {
+        // ARRANGE
+        var clock = new FixedClock();
+        var user = CreateUser("test@example.com", "hashed-pass", active: true);
+        var roles = new List<Role> { CreateRole("admin") };
+        var repo = new FakeUserRepository { User = user, Roles = roles };
+        var refreshRepo = new FakeRefreshTokenRepository();
+        var nonDefaultOptions = new AuthTokenOptions { RefreshTokenDays = 14 };
+        var handler = CreateHandler(repo, clock: clock, refreshRepo: refreshRepo, authOptions: nonDefaultOptions);
+        var command = new LoginCommand("test@example.com", "StrongP@ss1!");
+
+        // ACT
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // ASSERT
+        Assert.True(result.IsSuccess);
+        Assert.Single(refreshRepo.SavedTokens);
+        var savedToken = refreshRepo.SavedTokens[0];
+        var expectedExpiry = clock.UtcNow.AddDays(14);
+        Assert.Equal(expectedExpiry, savedToken.ExpiresAt);
+    }
+
     // ─────────────── Helpers ───────────────
 
     private static LoginCommandHandler CreateHandler(
@@ -163,7 +190,7 @@ public sealed class LoginCommandHandlerTests
         IJwtTokenService? jwt = null,
         IRefreshTokenRepository? refreshRepo = null,
         IClock? clock = null,
-        ITokenService? tokenSvc = null)
+        AuthTokenOptions? authOptions = null)
     {
         var defaultUser = CreateUser("test@example.com", "hashed-pass", active: true);
         return new LoginCommandHandler(
@@ -178,7 +205,7 @@ public sealed class LoginCommandHandlerTests
             },
             refreshRepo ?? new FakeRefreshTokenRepository(),
             clock ?? new FixedClock(),
-            tokenSvc ?? new FakeTokenService());
+            authOptions ?? DefaultOptions);
     }
 
     private static User CreateUser(string email, string passwordHash, bool active)
@@ -293,15 +320,5 @@ public sealed class LoginCommandHandlerTests
         public void Delete(RefreshToken entity) => throw new NotImplementedException();
         public Task<PagedResult<RefreshToken>> GetPagedAsync(PageRequest request, bool includeDeleted = false, CancellationToken ct = default)
             => throw new NotImplementedException();
-    }
-
-    private sealed class FakeTokenService : ITokenService
-    {
-        public int RevokeFamilyCallCount { get; private set; }
-        public Task RevokeFamilyAsync(Guid familyId, CancellationToken ct = default)
-        {
-            RevokeFamilyCallCount++;
-            return Task.CompletedTask;
-        }
     }
 }

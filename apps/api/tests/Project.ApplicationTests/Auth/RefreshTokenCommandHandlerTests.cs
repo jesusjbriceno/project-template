@@ -15,6 +15,7 @@ namespace Project.ApplicationTests.Auth;
 public sealed class RefreshTokenCommandHandlerTests
 {
     private static readonly UserId _testUserId = UserId.New();
+    private static readonly AuthTokenOptions DefaultOptions = new() { RefreshTokenDays = 7 };
 
     // ─────────────── Success (rotation) ───────────────
 
@@ -164,7 +165,8 @@ public sealed class RefreshTokenCommandHandlerTests
             },
             clock,
             new FakeTokenService(),
-            userRepo);
+            userRepo,
+            DefaultOptions);
 
         var command = new RefreshTokenCommand("raw-for-blocked-user");
 
@@ -201,7 +203,8 @@ public sealed class RefreshTokenCommandHandlerTests
             },
             clock,
             new FakeTokenService(),
-            userRepo);
+            userRepo,
+            DefaultOptions);
 
         var command = new RefreshTokenCommand("raw-for-deleted-user");
 
@@ -214,6 +217,33 @@ public sealed class RefreshTokenCommandHandlerTests
         Assert.Empty(refreshRepo.SavedTokens);
         Assert.Null(refreshRepo.LastUpdated);
         Assert.False(existingToken.IsRevoked);
+    }
+
+    // ─────────────── Configurable refresh token expiry ───────────────
+
+    [Fact]
+    public async Task Handle_ConfigurableRefreshTokenExpiry_UsesAuthTokenOptions()
+    {
+        // ARRANGE
+        var clock = new FixedClock();
+        var user = CreateUser("test@example.com");
+        var roles = new List<Role> { CreateRole("admin") };
+        var existingToken = CreateRefreshToken("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", clock, Guid.NewGuid());
+        var refreshRepo = new FakeRefreshTokenRepository { ExistingToken = existingToken };
+        var nonDefaultOptions = new AuthTokenOptions { RefreshTokenDays = 14 };
+        var handler = CreateHandler(clock, refreshRepo, user, roles, existingToken, authOptions: nonDefaultOptions);
+
+        var command = new RefreshTokenCommand("some-raw-refresh-token");
+
+        // ACT
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // ASSERT — the rotated token expiry must respect AuthTokenOptions.RefreshTokenDays
+        Assert.True(result.IsSuccess, $"Expected success but got: {result.Error.Code} - {result.Error.Message}");
+        Assert.Single(refreshRepo.SavedTokens);
+        var savedToken = refreshRepo.SavedTokens[0];
+        var expectedExpiry = clock.UtcNow.AddDays(14);
+        Assert.Equal(expectedExpiry, savedToken.ExpiresAt);
     }
 
     // ─────────────── Helpers ───────────────
@@ -230,7 +260,8 @@ public sealed class RefreshTokenCommandHandlerTests
         User? user = null,
         IReadOnlyCollection<Role>? roles = null,
         RefreshToken? existingToken = null,
-        ITokenService? tokenSvc = null)
+        ITokenService? tokenSvc = null,
+        AuthTokenOptions? authOptions = null)
     {
         user ??= CreateUser("test@example.com");
         roles ??= Array.Empty<Role>();
@@ -245,7 +276,8 @@ public sealed class RefreshTokenCommandHandlerTests
             },
             clock ?? new FixedClock(),
             tokenSvc ?? new FakeTokenService(),
-            new FakeUserRepository { User = user, Roles = roles });
+            new FakeUserRepository { User = user, Roles = roles },
+            authOptions ?? DefaultOptions);
     }
 
     private static User CreateUser(string email)
