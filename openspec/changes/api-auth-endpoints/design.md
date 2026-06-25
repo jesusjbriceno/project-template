@@ -13,6 +13,7 @@ Three infrastructure → application → API slices as force-chained PRs (≤400
 | Refresh token shape | 32 random bytes → base64url raw to client; SHA-256 → 64-char hex stored | Matches `RefreshToken.Create`; OWASP standard |
 | `ITokenService` impl | Thin `TokenService` adapter → `IRefreshTokenRepository.RevokeFamilyAsync` | Preserves boundary for future audit/metrics |
 | Controllers vs endpoints | `AuthController` under `Project.Api.Controllers/Controllers/` | AGENTS.md: controllers preferred |
+| Command handler contract | `ICommandHandler<TCommand, TResult>` for value-returning handlers; `ICommandHandler<TCommand>` for void | `LoginCommandHandler` and `RefreshTokenCommandHandler` implement the typed variant; `LogoutCommandHandler` implements the void variant |
 | User with roles lookup | New `IUserRepository.GetByEmailWithRolesAsync` | Needed for JWT `roles[]`; `UserRole` → `Role` is navigationless |
 | Password policy | Static `PasswordPolicy.IsStrongEnough` in App; same 401 on failure | Single source; aligns with `SuperadminCredentialValidator.MinimumPasswordLength = 12` |
 | Startup config | `AddOptions<JwtOptions>().Bind(...).ValidateDataAnnotations().ValidateOnStart()` | Built-in; fails fast |
@@ -26,8 +27,8 @@ Three infrastructure → application → API slices as force-chained PRs (≤400
       → PasswordPolicy.IsStrongEnough → RefreshToken.Create+Add
       → IJwtTokenService.GenerateAccessToken
   → Result<TokenPairDto> → 200 { accessToken, expiresIn }
-     Set-Cookie: refreshToken=<raw>; HttpOnly; Secure; SameSite=Strict;
-                 Path=/auth/refresh; Max-Age=Jwt__RefreshTokenDays*86400
+      Set-Cookie: refreshToken=<raw>; HttpOnly; Secure; SameSite=Strict;
+                 Path=/auth; Max-Age=Jwt__RefreshTokenDays*86400
 ```
 
 Refresh: cookie → `GetByTokenHashAsync` → `Rotate` (catches `RefreshTokenReuseSignalException` → `ITokenService.RevokeFamilyAsync`) → new access + rotated cookie. Logout: lookup → revoke family → clear cookie → 204.
@@ -55,7 +56,8 @@ public interface IJwtTokenService
     (string Raw, string Hash) GenerateRefreshToken();
     ClaimsPrincipal? ValidateAccessToken(string token);
 }
-public sealed record TokenPairDto(string AccessToken, int ExpiresInSeconds);
+public sealed record TokenPairDto(string AccessToken, int ExpiresInSeconds, string RefreshToken);
+// RefreshToken is the raw value for the API layer to set the HttpOnly cookie
 public sealed record LoginCommand(string Email, string Password) : ICommand;
 public sealed record RefreshTokenCommand(string RefreshTokenRaw) : ICommand;
 public sealed record LogoutCommand(string RefreshTokenRaw) : ICommand;
@@ -82,10 +84,10 @@ Tests ship with the work unit they verify (work-unit-commits).
 
 ## Migration / Rollout
 
-- **Schema**: no change — `refresh_tokens` exists.
+- **Schema**: `refresh_tokens` table exists; Slice 2 adds `UserId` column via migration `20260624120000_AddRefreshTokenUserId`.
 - **Env**: ops generate `Jwt__Secret` (≥32 random bytes). Rotate by redeploy; access tokens expire ≤15 min, refresh tokens become unverifiable.
 - **Dev**: `Secure` relaxed via `CookieSecurePolicy.SameAsRequest`.
-- **Rollback**: revert `Program.cs`; re-register `NullUserSession`; delete auth files. No DB rollback.
+- **Rollback**: revert `Program.cs`; re-register `NullUserSession`; delete auth files. Run `Down` migration for `20260624120000_AddRefreshTokenUserId` to drop `UserId` column (migration deletes existing refresh tokens in `Up()` — no data to restore on rollback).
 
 ## Chained PR Plan
 

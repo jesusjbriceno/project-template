@@ -67,11 +67,11 @@ Access tokens SHALL use HS256, 15-min lifetime. Claims: `sub`, `email`, `roles[]
 
 ### Requirement: Refresh Token Cookie Policy
 
-Cookie SHALL be set with: HttpOnly, Secure, SameSite=Strict, Path=/auth/refresh. Max-Age SHALL be configurable via `Jwt__RefreshTokenDays` (default 604800s / 7 days).
+Cookie SHALL be set with: HttpOnly, Secure, SameSite=Strict, Path=/auth. Max-Age SHALL be configurable via `Jwt__RefreshTokenDays` (default 604800s / 7 days).
 
 #### Scenario: Cookie security properties
 - GIVEN any auth response setting the cookie
-- THEN JavaScript-inaccessible, HTTPS-only, CSRF-protected, path-scoped
+- THEN JavaScript-inaccessible, HTTPS-only, CSRF-protected, path-scoped to `/auth`
 
 ### Requirement: Password Policy
 

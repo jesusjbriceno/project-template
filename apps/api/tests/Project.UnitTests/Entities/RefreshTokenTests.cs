@@ -7,6 +7,8 @@ namespace Project.UnitTests.Entities;
 
 public class RefreshTokenTests
 {
+    private static readonly UserId _testUserId = UserId.New();
+
     private sealed class FakeClock : IClock
     {
         public DateTimeOffset UtcNow { get; init; } = new(2026, 6, 14, 10, 0, 0, TimeSpan.Zero);
@@ -28,7 +30,7 @@ public class RefreshTokenTests
         var clock = new FakeClock();
         var expiresAt = clock.UtcNow.AddDays(7);
 
-        var token = RefreshToken.Create(Hash1, Guid.NewGuid(), expiresAt, clock);
+        var token = RefreshToken.Create(_testUserId, Hash1, Guid.NewGuid(), expiresAt, clock);
 
         Assert.NotEqual(default, token.Id);
         Assert.Equal(Hash1, token.TokenHash);
@@ -44,7 +46,7 @@ public class RefreshTokenTests
     {
         var clock = new FakeClock();
         var ex = Assert.Throws<ArgumentNullException>(() =>
-            RefreshToken.Create(null!, Guid.NewGuid(), clock.UtcNow, clock));
+            RefreshToken.Create(_testUserId, null!, Guid.NewGuid(), clock.UtcNow, clock));
         Assert.Contains("tokenHash", ex.ParamName!);
     }
 
@@ -53,7 +55,7 @@ public class RefreshTokenTests
     {
         var clock = new FakeClock();
         var ex = Assert.Throws<ArgumentException>(() =>
-            RefreshToken.Create("", Guid.NewGuid(), clock.UtcNow, clock));
+            RefreshToken.Create(_testUserId, "", Guid.NewGuid(), clock.UtcNow, clock));
         Assert.Contains("tokenHash", ex.ParamName!);
     }
 
@@ -62,7 +64,7 @@ public class RefreshTokenTests
     {
         var clock = new FakeClock();
         var ex = Assert.Throws<ArgumentException>(() =>
-            RefreshToken.Create("   ", Guid.NewGuid(), clock.UtcNow, clock));
+            RefreshToken.Create(_testUserId, "   ", Guid.NewGuid(), clock.UtcNow, clock));
         Assert.Contains("tokenHash", ex.ParamName!);
     }
 
@@ -71,7 +73,7 @@ public class RefreshTokenTests
     {
         var clock = new FakeClock();
         var ex = Assert.Throws<ArgumentException>(() =>
-            RefreshToken.Create("abc123", Guid.NewGuid(), clock.UtcNow, clock));
+            RefreshToken.Create(_testUserId, "abc123", Guid.NewGuid(), clock.UtcNow, clock));
         Assert.Contains("64", ex.Message);
         Assert.Contains("tokenHash", ex.ParamName!);
     }
@@ -82,7 +84,7 @@ public class RefreshTokenTests
         var clock = new FakeClock();
         var nonHex = new string('g', 64); // 64 'g' chars — 'g' is not hex
         var ex = Assert.Throws<ArgumentException>(() =>
-            RefreshToken.Create(nonHex, Guid.NewGuid(), clock.UtcNow, clock));
+            RefreshToken.Create(_testUserId, nonHex, Guid.NewGuid(), clock.UtcNow, clock));
         Assert.Contains("hex", ex.Message.ToLowerInvariant());
         Assert.Contains("tokenHash", ex.ParamName!);
     }
@@ -93,7 +95,7 @@ public class RefreshTokenTests
         var clock = new FakeClock();
         var upperHash = Hash1.ToUpperInvariant(); // same hash, uppercase
 
-        var token = RefreshToken.Create(upperHash, Guid.NewGuid(), clock.UtcNow.AddDays(7), clock);
+        var token = RefreshToken.Create(_testUserId, upperHash, Guid.NewGuid(), clock.UtcNow.AddDays(7), clock);
 
         Assert.Equal(Hash1, token.TokenHash); // normalized to lowercase
     }
@@ -109,7 +111,7 @@ public class RefreshTokenTests
                 span[i] = i % 2 == 0 ? char.ToUpperInvariant(hash[i]) : hash[i];
         });
 
-        var token = RefreshToken.Create(mixed, Guid.NewGuid(), clock.UtcNow.AddDays(7), clock);
+        var token = RefreshToken.Create(_testUserId, mixed, Guid.NewGuid(), clock.UtcNow.AddDays(7), clock);
 
         Assert.Equal(Hash1, token.TokenHash); // fully normalized to lowercase
     }
@@ -121,7 +123,7 @@ public class RefreshTokenTests
         var longHash = Hash1 + "00"; // 66 chars
 
         var ex = Assert.Throws<ArgumentException>(() =>
-            RefreshToken.Create(longHash, Guid.NewGuid(), clock.UtcNow, clock));
+            RefreshToken.Create(_testUserId, longHash, Guid.NewGuid(), clock.UtcNow, clock));
         Assert.Contains("64", ex.Message);
         Assert.Contains("tokenHash", ex.ParamName!);
     }
@@ -134,7 +136,7 @@ public class RefreshTokenTests
         var corrupt = Hash1[..32] + "@-" + Hash1[34..];
 
         var ex = Assert.Throws<ArgumentException>(() =>
-            RefreshToken.Create(corrupt, Guid.NewGuid(), clock.UtcNow, clock));
+            RefreshToken.Create(_testUserId, corrupt, Guid.NewGuid(), clock.UtcNow, clock));
         Assert.Contains("hex", ex.Message.ToLowerInvariant());
     }
 
@@ -142,7 +144,7 @@ public class RefreshTokenTests
     public void Rotate_ExpiredTokenAtExactBoundary_ThrowsInvalidOperationException()
     {
         var clock = new FakeClock();
-        var token = RefreshToken.Create(Hash1, Guid.NewGuid(),
+        var token = RefreshToken.Create(_testUserId, Hash1, Guid.NewGuid(),
             clock.UtcNow, clock); // expires exactly at UtcNow
 
         Assert.True(token.IsExpired(clock)); // boundary: expired
@@ -159,7 +161,7 @@ public class RefreshTokenTests
     {
         var clock = new FakeClock();
         var ex = Assert.Throws<ArgumentException>(() =>
-            RefreshToken.Create(Hash1, Guid.Empty, clock.UtcNow.AddDays(7), clock));
+            RefreshToken.Create(_testUserId, Hash1, Guid.Empty, clock.UtcNow.AddDays(7), clock));
         Assert.Contains("familyId", ex.ParamName!);
     }
 
@@ -169,7 +171,7 @@ public class RefreshTokenTests
     public void IsExpired_PastExpiry_ReturnsTrue()
     {
         var clock = new FakeClock();
-        var token = RefreshToken.Create(Hash1, Guid.NewGuid(),
+        var token = RefreshToken.Create(_testUserId, Hash1, Guid.NewGuid(),
             clock.UtcNow.AddMinutes(-10), clock);
 
         Assert.True(token.IsExpired(clock));
@@ -179,7 +181,7 @@ public class RefreshTokenTests
     public void IsExpired_BeforeExpiry_ReturnsFalse()
     {
         var clock = new FakeClock();
-        var token = RefreshToken.Create(Hash1, Guid.NewGuid(),
+        var token = RefreshToken.Create(_testUserId, Hash1, Guid.NewGuid(),
             clock.UtcNow.AddDays(7), clock);
 
         Assert.False(token.IsExpired(clock));
@@ -189,7 +191,7 @@ public class RefreshTokenTests
     public void IsRevoked_FreshToken_ReturnsFalse()
     {
         var clock = new FakeClock();
-        var token = RefreshToken.Create(Hash1, Guid.NewGuid(),
+        var token = RefreshToken.Create(_testUserId, Hash1, Guid.NewGuid(),
             clock.UtcNow.AddDays(7), clock);
 
         Assert.False(token.IsRevoked);
@@ -199,7 +201,7 @@ public class RefreshTokenTests
     public void IsActive_FreshToken_ReturnsTrue()
     {
         var clock = new FakeClock();
-        var token = RefreshToken.Create(Hash1, Guid.NewGuid(),
+        var token = RefreshToken.Create(_testUserId, Hash1, Guid.NewGuid(),
             clock.UtcNow.AddDays(7), clock);
 
         Assert.True(token.IsActive(clock));
@@ -209,7 +211,7 @@ public class RefreshTokenTests
     public void IsActive_ExpiredToken_ReturnsFalse()
     {
         var clock = new FakeClock();
-        var token = RefreshToken.Create(Hash1, Guid.NewGuid(),
+        var token = RefreshToken.Create(_testUserId, Hash1, Guid.NewGuid(),
             clock.UtcNow.AddMinutes(-1), clock);
 
         Assert.False(token.IsActive(clock));
@@ -219,7 +221,7 @@ public class RefreshTokenTests
     public void IsActive_RevokedToken_ReturnsFalse()
     {
         var clock = new FakeClock();
-        var token = RefreshToken.Create(Hash1, Guid.NewGuid(),
+        var token = RefreshToken.Create(_testUserId, Hash1, Guid.NewGuid(),
             clock.UtcNow.AddDays(7), clock);
 
         token.Revoke(clock);
@@ -231,7 +233,7 @@ public class RefreshTokenTests
     public void IsReuseSignal_FreshToken_ReturnsFalse()
     {
         var clock = new FakeClock();
-        var token = RefreshToken.Create(Hash1, Guid.NewGuid(),
+        var token = RefreshToken.Create(_testUserId, Hash1, Guid.NewGuid(),
             clock.UtcNow.AddDays(7), clock);
 
         Assert.False(token.IsReuseSignal);
@@ -243,7 +245,7 @@ public class RefreshTokenTests
     public void IsReuseSignal_RevokedWithoutReplacement_ReturnsTrue()
     {
         var clock = new FakeClock();
-        var token = RefreshToken.Create(Hash1, Guid.NewGuid(),
+        var token = RefreshToken.Create(_testUserId, Hash1, Guid.NewGuid(),
             clock.UtcNow.AddDays(7), clock);
         token.Revoke(clock);
 
@@ -257,7 +259,7 @@ public class RefreshTokenTests
     public void Rotate_RevokesCurrentToken()
     {
         var clock = new FakeClock();
-        var token = RefreshToken.Create(Hash1, Guid.NewGuid(),
+        var token = RefreshToken.Create(_testUserId, Hash1, Guid.NewGuid(),
             clock.UtcNow.AddDays(1), clock);
 
         token.Rotate(Hash2, clock.UtcNow.AddDays(7), clock);
@@ -270,7 +272,7 @@ public class RefreshTokenTests
     public void Rotate_SetsReplacedByTokenHash()
     {
         var clock = new FakeClock();
-        var token = RefreshToken.Create(Hash1, Guid.NewGuid(),
+        var token = RefreshToken.Create(_testUserId, Hash1, Guid.NewGuid(),
             clock.UtcNow.AddDays(1), clock);
 
         token.Rotate(Hash2, clock.UtcNow.AddDays(7), clock);
@@ -283,7 +285,7 @@ public class RefreshTokenTests
     {
         var clock = new FakeClock();
         var familyId = Guid.NewGuid();
-        var t1 = RefreshToken.Create(Hash1, familyId,
+        var t1 = RefreshToken.Create(_testUserId, Hash1, familyId,
             clock.UtcNow.AddDays(1), clock);
 
         var t2 = t1.Rotate(Hash2, clock.UtcNow.AddDays(7), clock);
@@ -297,7 +299,7 @@ public class RefreshTokenTests
     public void Rotate_NewTokenIsActive()
     {
         var clock = new FakeClock();
-        var t1 = RefreshToken.Create(Hash1, Guid.NewGuid(),
+        var t1 = RefreshToken.Create(_testUserId, Hash1, Guid.NewGuid(),
             clock.UtcNow.AddDays(1), clock);
 
         var t2 = t1.Rotate(Hash2, clock.UtcNow.AddDays(7), clock);
@@ -310,7 +312,7 @@ public class RefreshTokenTests
     public void IsReuseSignal_AfterRotation_ReturnsTrue()
     {
         var clock = new FakeClock();
-        var t1 = RefreshToken.Create(Hash1, Guid.NewGuid(),
+        var t1 = RefreshToken.Create(_testUserId, Hash1, Guid.NewGuid(),
             clock.UtcNow.AddDays(1), clock);
 
         t1.Rotate(Hash2, clock.UtcNow.AddDays(7), clock);
@@ -324,7 +326,7 @@ public class RefreshTokenTests
     public void Rotate_OnRevokedWithoutReplacementToken_ThrowsRefreshTokenReuseSignalException()
     {
         var clock = new FakeClock();
-        var token = RefreshToken.Create(Hash1, Guid.NewGuid(),
+        var token = RefreshToken.Create(_testUserId, Hash1, Guid.NewGuid(),
             clock.UtcNow.AddDays(7), clock);
         token.Revoke(clock); // admin/logout revocation — no replacement
 
@@ -340,7 +342,7 @@ public class RefreshTokenTests
     public void Rotate_OnExpiredToken_ThrowsInvalidOperationException()
     {
         var clock = new FakeClock();
-        var token = RefreshToken.Create(Hash1, Guid.NewGuid(),
+        var token = RefreshToken.Create(_testUserId, Hash1, Guid.NewGuid(),
             clock.UtcNow.AddMinutes(-10), clock); // already expired
 
         Assert.True(token.IsExpired(clock));
@@ -356,7 +358,7 @@ public class RefreshTokenTests
     public void Rotate_WithInvalidNewTokenHash_DoesNotMutateCurrentToken()
     {
         var clock = new FakeClock();
-        var token = RefreshToken.Create(Hash1, Guid.NewGuid(),
+        var token = RefreshToken.Create(_testUserId, Hash1, Guid.NewGuid(),
             clock.UtcNow.AddDays(1), clock);
 
         var invalidHash = "not-a-valid-sha256-hash";
@@ -382,7 +384,7 @@ public class RefreshTokenTests
     public void Chain_T1RotateToT2_IsReuseSignalOnT1()
     {
         var clock = new FakeClock();
-        var t1 = RefreshToken.Create(Hash1, Guid.NewGuid(),
+        var t1 = RefreshToken.Create(_testUserId, Hash1, Guid.NewGuid(),
             clock.UtcNow.AddDays(1), clock);
 
         t1.Rotate(Hash2, clock.UtcNow.AddDays(7), clock);
@@ -397,7 +399,7 @@ public class RefreshTokenTests
     {
         var clock = new FakeClock();
         var familyId = Guid.NewGuid();
-        var t1 = RefreshToken.Create(Hash1, familyId,
+        var t1 = RefreshToken.Create(_testUserId, Hash1, familyId,
             clock.UtcNow.AddDays(1), clock);
         var t2 = t1.Rotate(Hash2, clock.UtcNow.AddDays(7), clock);
         var t3 = t2.Rotate(Hash3, clock.UtcNow.AddDays(14), clock);
@@ -424,7 +426,7 @@ public class RefreshTokenTests
     public void Chain_ReuseOfRotatedToken_ThrowsRefreshTokenReuseSignalException()
     {
         var clock = new FakeClock();
-        var t1 = RefreshToken.Create(Hash1, Guid.NewGuid(),
+        var t1 = RefreshToken.Create(_testUserId, Hash1, Guid.NewGuid(),
             clock.UtcNow.AddDays(1), clock);
 
         // First rotation is fine

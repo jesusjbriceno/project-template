@@ -15,6 +15,7 @@ namespace Project.Domain.Entities;
 public sealed class RefreshToken
 {
     public RefreshTokenId Id { get; private set; }
+    public UserId UserId { get; private set; }
     public string TokenHash { get; private set; }
     public Guid FamilyId { get; private set; }
     public DateTimeOffset ExpiresAt { get; private set; }
@@ -48,12 +49,14 @@ public sealed class RefreshToken
 
     private RefreshToken(
         RefreshTokenId id,
+        UserId userId,
         string tokenHash,
         Guid familyId,
         DateTimeOffset expiresAt,
         IClock clock)
     {
         Id = id;
+        UserId = userId;
         TokenHash = tokenHash;
         FamilyId = familyId;
         ExpiresAt = expiresAt;
@@ -73,17 +76,19 @@ public sealed class RefreshToken
     /// contains non-hexadecimal characters, or when <paramref name="familyId"/> is <see cref="Guid.Empty"/>.
     /// </exception>
     public static RefreshToken Create(
+        UserId userId,
         string tokenHash,
         Guid familyId,
         DateTimeOffset expiresAt,
         IClock clock)
     {
+        ArgumentNullException.ThrowIfNull(userId);
         var normalizedHash = ValidateAndNormalizeTokenHash(tokenHash);
 
         if (familyId == Guid.Empty)
             throw new ArgumentException("Family ID cannot be empty.", nameof(familyId));
 
-        return new RefreshToken(RefreshTokenId.New(), normalizedHash, familyId, expiresAt, clock);
+        return new RefreshToken(RefreshTokenId.New(), userId, normalizedHash, familyId, expiresAt, clock);
     }
 
     /// <summary>
@@ -131,7 +136,7 @@ public sealed class RefreshToken
 
         // Finding 4: Validate replacement BEFORE mutating current token.
         // Create() validates and normalizes the hash; if it throws, 'this' is untouched.
-        var newToken = Create(newTokenHash, FamilyId, expiresAt, clock);
+        var newToken = Create(UserId, newTokenHash, FamilyId, expiresAt, clock);
 
         // Now safe to mutate — validation succeeded
         RevokedAt = clock.UtcNow;

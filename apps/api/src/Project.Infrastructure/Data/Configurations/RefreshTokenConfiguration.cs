@@ -32,6 +32,7 @@ public sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refresh
         // Revoked tokens remain visible for security audit and reuse detection.
 
         // Properties
+        builder.Property(rt => rt.UserId).IsRequired();
         builder.Property(rt => rt.TokenHash).IsRequired();
         builder.Property(rt => rt.FamilyId);
         builder.Property(rt => rt.ExpiresAt);

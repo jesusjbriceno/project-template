@@ -53,7 +53,7 @@ Three infrastructure→application→API slices (force-chained, ≤400 lines eac
 | Risk | Likelihood | Mitigation |
 |------|------------|------------|
 | JWT secret leaked | High | Env var only; `.env` gitignored; `.env.example` template |
-| Refresh token CSRF | High | SameSite=Strict, HttpOnly, Secure, path `/auth/refresh` |
+| Refresh token CSRF | High | SameSite=Strict, HttpOnly, Secure, path `/auth` |
 | Reuse detection missed | Medium | `RefreshTokenReuseSignalException` + integration test |
 | UserSession breaks DI | Medium | `AddHttpContextAccessor()`; audit existing tests |
 
@@ -65,7 +65,7 @@ Three infrastructure→application→API slices (force-chained, ≤400 lines eac
 4. Revert `DependencyInjection.cs` auth additions
 5. Strip JWT env vars from `.env.example`
 
-No database rollback needed — `refresh_tokens` table already exists.
+No database rollback needed for Slice 1. **Slice 2 adds a `UserId` column to `refresh_tokens` via migration `20260624120000_AddRefreshTokenUserId`** — the `Down` migration must be run when reverting Slice 2.
 
 ## Dependencies
 

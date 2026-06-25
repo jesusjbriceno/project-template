@@ -191,11 +191,13 @@ These behaviors MUST be specified in the design/spec phase:
 
 ```
 Set-Cookie: refreshToken=<raw-token>; HttpOnly; Secure; SameSite=Strict; Max-Age=604800; Path=/auth/refresh
+
+(Note: exploration originally proposed /auth/refresh. Implementation remediated this to /auth so logout and refresh both receive the cookie.)
 ```
 
 - `Secure` requires HTTPS in production; development may need exception handling
 - `SameSite=Strict` prevents CSRF on refresh/logout
-- `Path=/auth/refresh` limits cookie scope (login sets it; refresh reads it; logout clears it)
+- `Path=/auth/refresh` limits cookie scope (login sets it; refresh reads it; logout clears it) — **remediated to `Path=/auth` during implementation** so login, refresh, and logout at `/auth/*` all share the cookie.
 
 ### Logout Behavior
 

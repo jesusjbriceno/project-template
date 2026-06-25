@@ -78,6 +78,115 @@ public sealed class UserRepositoryTests : IClassFixture<PostgresFixture>
         Assert.Null(result);
     }
 
+    // ── GetByEmailWithRolesAsync ───────────────────────────────────────────
+
+    [Fact]
+    public async Task GetByEmailWithRolesAsync_UserWithRoles_ReturnsUserAndRoles()
+    {
+        await CleanDatabaseAsync();
+        using var context = CreateContext();
+
+        var clock = new SystemClock();
+        var role1 = Role.Create("admin", isSystem: false, "test-creator", clock);
+        var role2 = Role.Create("viewer", isSystem: false, "test-creator", clock);
+        context.Roles.AddRange(role1, role2);
+
+        var user = User.Create(Email.Create("withroles@test.com"), "hash_roles", "test-creator", clock);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var ur1 = UserRole.Assign(user.Id, role1.Id, "test-creator", clock);
+        var ur2 = UserRole.Assign(user.Id, role2.Id, "test-creator", clock);
+        context.UserRoles.AddRange(ur1, ur2);
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+
+        var repo = new UserRepository(context);
+        var (result, roles) = await repo.GetByEmailWithRolesAsync(Email.Create("withroles@test.com"));
+
+        Assert.NotNull(result);
+        Assert.Equal(user.Id, result!.Id);
+        Assert.Equal(2, roles.Count);
+        Assert.Contains(roles, r => r.Id == role1.Id);
+        Assert.Contains(roles, r => r.Id == role2.Id);
+    }
+
+    [Fact]
+    public async Task GetByEmailWithRolesAsync_UserWithoutRoles_ReturnsUserAndEmptyRoles()
+    {
+        await CleanDatabaseAsync();
+        using var context = CreateContext();
+
+        var clock = new SystemClock();
+        var user = User.Create(Email.Create("noroles@test.com"), "hash_noroles", "test-creator", clock);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+
+        var repo = new UserRepository(context);
+        var (result, roles) = await repo.GetByEmailWithRolesAsync(Email.Create("noroles@test.com"));
+
+        Assert.NotNull(result);
+        Assert.Equal(user.Id, result!.Id);
+        Assert.Empty(roles);
+    }
+
+    [Fact]
+    public async Task GetByEmailWithRolesAsync_NonExistentEmail_ReturnsNullAndEmptyRoles()
+    {
+        await CleanDatabaseAsync();
+        using var context = CreateContext();
+
+        var repo = new UserRepository(context);
+        var (result, roles) = await repo.GetByEmailWithRolesAsync(Email.Create("ghost@test.com"));
+
+        Assert.Null(result);
+        Assert.Empty(roles);
+    }
+
+    // ── GetByIdWithRolesAsync ──────────────────────────────────────────────
+
+    [Fact]
+    public async Task GetByIdWithRolesAsync_UserWithRoles_ReturnsUserAndRoles()
+    {
+        await CleanDatabaseAsync();
+        using var context = CreateContext();
+
+        var clock = new SystemClock();
+        var role = Role.Create("editor", isSystem: false, "test-creator", clock);
+        context.Roles.Add(role);
+
+        var user = User.Create(Email.Create("byid@test.com"), "hash_byid", "test-creator", clock);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var ur = UserRole.Assign(user.Id, role.Id, "test-creator", clock);
+        context.UserRoles.Add(ur);
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+
+        var repo = new UserRepository(context);
+        var (result, roles) = await repo.GetByIdWithRolesAsync(user.Id);
+
+        Assert.NotNull(result);
+        Assert.Equal(user.Id, result!.Id);
+        Assert.Single(roles);
+        Assert.Equal(role.Id, roles.First().Id);
+    }
+
+    [Fact]
+    public async Task GetByIdWithRolesAsync_NonExistentId_ReturnsNullAndEmptyRoles()
+    {
+        await CleanDatabaseAsync();
+        using var context = CreateContext();
+
+        var repo = new UserRepository(context);
+        var (result, roles) = await repo.GetByIdWithRolesAsync(UserId.New());
+
+        Assert.Null(result);
+        Assert.Empty(roles);
+    }
+
     // ── ExistsAsync ────────────────────────────────────────────────────────
 
     [Fact]
