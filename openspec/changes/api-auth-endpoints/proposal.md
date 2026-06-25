@@ -53,7 +53,7 @@ Three infrastructure→application→API slices (force-chained, ≤400 lines eac
 | Risk | Likelihood | Mitigation |
 |------|------------|------------|
 | JWT secret leaked | High | Env var only; `.env` gitignored; `.env.example` template |
-| Refresh token CSRF | High | SameSite=Strict, HttpOnly, Secure, path `/auth/refresh` |
+| Refresh token CSRF | High | SameSite=Strict, HttpOnly, Secure, path `/auth` |
 | Reuse detection missed | Medium | `RefreshTokenReuseSignalException` + integration test |
 | UserSession breaks DI | Medium | `AddHttpContextAccessor()`; audit existing tests |
 

@@ -27,8 +27,8 @@ Three infrastructure → application → API slices as force-chained PRs (≤400
       → PasswordPolicy.IsStrongEnough → RefreshToken.Create+Add
       → IJwtTokenService.GenerateAccessToken
   → Result<TokenPairDto> → 200 { accessToken, expiresIn }
-     Set-Cookie: refreshToken=<raw>; HttpOnly; Secure; SameSite=Strict;
-                 Path=/auth/refresh; Max-Age=Jwt__RefreshTokenDays*86400
+      Set-Cookie: refreshToken=<raw>; HttpOnly; Secure; SameSite=Strict;
+                 Path=/auth; Max-Age=Jwt__RefreshTokenDays*86400
 ```
 
 Refresh: cookie → `GetByTokenHashAsync` → `Rotate` (catches `RefreshTokenReuseSignalException` → `ITokenService.RevokeFamilyAsync`) → new access + rotated cookie. Logout: lookup → revoke family → clear cookie → 204.
