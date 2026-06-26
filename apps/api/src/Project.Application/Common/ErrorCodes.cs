@@ -11,6 +11,16 @@ namespace Project.Application.Common;
 public static class ErrorCodes
 {
     /// <summary>
+    /// Non-auth application codes shared across API and application mapping.
+    /// </summary>
+    public static class General
+    {
+        public const string ValidationError = "VALIDATION_ERROR";
+        public const string NotFound = "NOT_FOUND";
+        public const string Conflict = "CONFLICT";
+    }
+
+    /// <summary>
     /// Error codes raised by the migration/seed bootstrap path for
     /// superadmin configuration validation.
     /// </summary>
@@ -36,8 +46,8 @@ public static class ErrorCodes
         /// <summary>
         /// The <c>SUPERADMIN_PASSWORD</c> configuration value is shorter than the
         /// minimum length enforced by <c>SuperadminCredentialValidator.MinimumPasswordLength</c>.
-    /// </summary>
-    public const string PasswordTooShort = "SUPERADMIN_PASSWORD_TOO_SHORT";
+        /// </summary>
+        public const string PasswordTooShort = "SUPERADMIN_PASSWORD_TOO_SHORT";
     }
 
     /// <summary>

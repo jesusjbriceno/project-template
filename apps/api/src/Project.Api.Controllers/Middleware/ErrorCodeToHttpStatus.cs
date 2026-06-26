@@ -33,13 +33,13 @@ internal static class ErrorCodeToHttpStatus
             ErrorCodes.Auth.RefreshTokenMissing
                 => StatusCodes.Status400BadRequest,
 
-            "VALIDATION_ERROR"
+            ErrorCodes.General.ValidationError
                 => StatusCodes.Status400BadRequest,
 
-            "NOT_FOUND"
+            ErrorCodes.General.NotFound
                 => StatusCodes.Status404NotFound,
 
-            "CONFLICT"
+            ErrorCodes.General.Conflict
                 => StatusCodes.Status409Conflict,
 
             _ => StatusCodes.Status500InternalServerError

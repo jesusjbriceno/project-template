@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Project.Api.Controllers.Middleware;
@@ -17,10 +18,14 @@ namespace Project.Api.Controllers.Middleware;
 internal sealed class ApiExceptionHandler : IExceptionHandler
 {
     private readonly ILogger<ApiExceptionHandler> _logger;
+    private readonly IProblemDetailsService _problemDetailsService;
 
-    public ApiExceptionHandler(ILogger<ApiExceptionHandler> logger)
+    public ApiExceptionHandler(
+        ILogger<ApiExceptionHandler> logger,
+        IProblemDetailsService problemDetailsService)
     {
         _logger = logger;
+        _problemDetailsService = problemDetailsService;
     }
 
     /// <inheritdoc />
@@ -29,32 +34,38 @@ internal sealed class ApiExceptionHandler : IExceptionHandler
         Exception exception,
         CancellationToken cancellationToken)
     {
-        // Request-aborted cancellations are expected — log quietly and suppress the 500.
-        if (exception is OperationCanceledException or TaskCanceledException)
+        if (httpContext.Response.HasStarted)
+        {
+            _logger.LogWarning(exception, "Response already started; cannot write ProblemDetails safely");
+            return false; // Let the default handler deal with it (it won't write a body)
+        }
+
+        var isCancellationException = exception is OperationCanceledException or TaskCanceledException;
+        var isClientCancellation = isCancellationException && httpContext.RequestAborted.IsCancellationRequested;
+
+        if (isClientCancellation)
         {
             _logger.LogInformation(
                 exception,
-                "Request was cancelled — no ProblemDetails emitted for client disconnect");
-            return false; // Let the default handler deal with it (it won't write a body)
+                "Request was cancelled by the client; suppressing ProblemDetails response");
+            return true;
         }
 
         // Real exception — log at Error level for server-side diagnostics.
         _logger.LogError(exception, "Unhandled exception caught by global handler");
 
-        // Build a safe, generic 500 ProblemDetails — NEVER expose exception details.
-        var problemDetails = new ProblemDetails
-        {
-            Status = StatusCodes.Status500InternalServerError,
-            Title = "Internal Server Error",
-            Detail = "An unexpected error occurred. Please try again later.",
-        };
+        var problemDetails = ProblemDetailsResponseFactory.Create(
+            StatusCodes.Status500InternalServerError,
+            "UNHANDLED_EXCEPTION",
+            null);
 
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
-        httpContext.Response.ContentType = "application/problem+json";
 
-        await httpContext.Response.WriteAsJsonAsync(
-            problemDetails,
-            cancellationToken);
+        await _problemDetailsService.WriteAsync(new ProblemDetailsContext
+        {
+            HttpContext = httpContext,
+            ProblemDetails = problemDetails
+        });
 
         // Return true: handler took ownership — default handler won't run.
         // IMPORTANT: This suppresses the exception diagnostics middleware for this

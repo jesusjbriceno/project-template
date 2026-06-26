@@ -47,9 +47,10 @@ public sealed class ExceptionHandlerIntegrationTests : IClassFixture<Auth.AuthTe
         Assert.NotNull(problemDetails.Title);
 
         // ASSERT — safe detail: does NOT leak internal exception message
-        Assert.False(string.IsNullOrWhiteSpace(problemDetails.Detail));
+        Assert.Equal("An unexpected error occurred. Please try again later.", problemDetails.Detail);
         Assert.DoesNotContain("Test exception", problemDetails.Detail, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("InvalidOperationException", problemDetails.Detail, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("https://httpstatuses.com/500", problemDetails.Type);
 
         // ASSERT — no stack trace leaked
         var rawBody = await response.Content.ReadAsStringAsync();

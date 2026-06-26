@@ -12,6 +12,22 @@ namespace Project.UnitTests.Middleware;
 /// </summary>
 public sealed class ResultProblemDetailsMapperTests
 {
+    [Fact]
+    public void Map_Result_Success_ThrowsInvalidOperationException()
+    {
+        var result = Result.Success();
+
+        Assert.Throws<InvalidOperationException>(() => ResultProblemDetailsMapper.Map(result));
+    }
+
+    [Fact]
+    public void Map_ResultT_Success_ThrowsInvalidOperationException()
+    {
+        var result = Result<int>.Success(42);
+
+        Assert.Throws<InvalidOperationException>(() => ResultProblemDetailsMapper.Map(result));
+    }
+
     // ── Result (non-generic) ─────────────────────────────────
 
     [Fact]
@@ -21,7 +37,7 @@ public sealed class ResultProblemDetailsMapperTests
 
         var actionResult = ResultProblemDetailsMapper.Map(result);
 
-        AssertProblemDetails(actionResult, expectedStatus: 401, expectedCode: "AUTH_INVALID_CREDENTIALS");
+        AssertProblemDetails(actionResult, expectedStatus: 401, expectedCode: ErrorCodes.Auth.InvalidCredentials);
     }
 
     [Fact]
@@ -31,7 +47,7 @@ public sealed class ResultProblemDetailsMapperTests
 
         var actionResult = ResultProblemDetailsMapper.Map(result);
 
-        AssertProblemDetails(actionResult, expectedStatus: 401, expectedCode: "AUTH_TOKEN_EXPIRED");
+        AssertProblemDetails(actionResult, expectedStatus: 401, expectedCode: ErrorCodes.Auth.TokenExpired);
     }
 
     [Fact]
@@ -41,17 +57,34 @@ public sealed class ResultProblemDetailsMapperTests
 
         var actionResult = ResultProblemDetailsMapper.Map(result);
 
-        AssertProblemDetails(actionResult, expectedStatus: 400, expectedCode: "AUTH_REFRESH_TOKEN_MISSING");
+        AssertProblemDetails(actionResult, expectedStatus: 400, expectedCode: ErrorCodes.Auth.RefreshTokenMissing);
     }
 
     [Fact]
-    public void Map_Result_UnknownCode_Returns500ProblemDetails()
+    public void Map_Result_AuthInvalidCredentials_PreservesGenericDetail()
+    {
+        var result = Result.Failure(ErrorCodes.Auth.InvalidCredentials, "Invalid credentials.");
+
+        var actionResult = ResultProblemDetailsMapper.Map(result);
+
+        var problemDetails = GetProblemDetails(actionResult);
+        Assert.Equal("Invalid credentials.", problemDetails.Detail);
+        Assert.Equal("https://httpstatuses.com/401", problemDetails.Type);
+    }
+
+    [Fact]
+    public void Map_Result_UnknownCode_ReturnsSafeGeneric500ProblemDetails()
     {
         var result = Result.Failure("SOME_UNKNOWN_CODE", "Something went wrong.");
 
         var actionResult = ResultProblemDetailsMapper.Map(result);
 
-        AssertProblemDetails(actionResult, expectedStatus: 500, expectedCode: "SOME_UNKNOWN_CODE");
+        var problemDetails = GetProblemDetails(actionResult);
+        Assert.Equal(500, problemDetails.Status);
+        Assert.Equal("Internal Server Error", problemDetails.Title);
+        Assert.Equal("https://httpstatuses.com/500", problemDetails.Type);
+        Assert.Equal("An unexpected error occurred. Please try again later.", problemDetails.Detail);
+        Assert.Equal("SOME_UNKNOWN_CODE", problemDetails.Extensions["code"]?.ToString());
     }
 
     // ── Result<T> (generic) ──────────────────────────────────
@@ -63,17 +96,17 @@ public sealed class ResultProblemDetailsMapperTests
 
         var actionResult = ResultProblemDetailsMapper.Map(result);
 
-        AssertProblemDetails(actionResult, expectedStatus: 401, expectedCode: "AUTH_TOKEN_REUSE_DETECTED");
+        AssertProblemDetails(actionResult, expectedStatus: 401, expectedCode: ErrorCodes.Auth.TokenReuseDetected);
     }
 
     [Fact]
     public void Map_ResultT_ValidationError_Returns400ProblemDetails()
     {
-        var result = Result<int>.Failure("VALIDATION_ERROR", "Validation failed.");
+        var result = Result<int>.Failure(ErrorCodes.General.ValidationError, "Validation failed.");
 
         var actionResult = ResultProblemDetailsMapper.Map(result);
 
-        AssertProblemDetails(actionResult, expectedStatus: 400, expectedCode: "VALIDATION_ERROR");
+        AssertProblemDetails(actionResult, expectedStatus: 400, expectedCode: ErrorCodes.General.ValidationError);
     }
 
     // ── Safe detail ──────────────────────────────────────────
@@ -86,12 +119,13 @@ public sealed class ResultProblemDetailsMapperTests
     [Fact]
     public void Map_Result_DetailPreservesErrorMessage()
     {
-        var result = Result.Failure("CONFLICT", "The resource already exists.");
+        var result = Result.Failure(ErrorCodes.General.Conflict, "The resource already exists.");
 
         var actionResult = ResultProblemDetailsMapper.Map(result);
 
         var problemDetails = GetProblemDetails(actionResult);
         Assert.Equal("The resource already exists.", problemDetails.Detail);
+        Assert.Equal("https://httpstatuses.com/409", problemDetails.Type);
     }
 
     // ── Extensions.code present ──────────────────────────────
@@ -99,22 +133,22 @@ public sealed class ResultProblemDetailsMapperTests
     [Fact]
     public void Map_Result_ExtensionsContainsCode()
     {
-        var result = Result.Failure("NOT_FOUND", "Resource not found.");
+        var result = Result.Failure(ErrorCodes.General.NotFound, "Resource not found.");
 
         var actionResult = ResultProblemDetailsMapper.Map(result);
 
         var problemDetails = GetProblemDetails(actionResult);
         Assert.True(problemDetails.Extensions.ContainsKey("code"));
-        Assert.Equal("NOT_FOUND", problemDetails.Extensions["code"]?.ToString());
+        Assert.Equal(ErrorCodes.General.NotFound, problemDetails.Extensions["code"]?.ToString());
     }
 
     // ── Title matches HTTP status reason phrase ──────────────
 
     [Theory]
-    [InlineData("AUTH_INVALID_CREDENTIALS", 401, "Unauthorized")]
-    [InlineData("AUTH_REFRESH_TOKEN_MISSING", 400, "Bad Request")]
-    [InlineData("NOT_FOUND", 404, "Not Found")]
-    [InlineData("CONFLICT", 409, "Conflict")]
+    [InlineData(ErrorCodes.Auth.InvalidCredentials, 401, "Unauthorized")]
+    [InlineData(ErrorCodes.Auth.RefreshTokenMissing, 400, "Bad Request")]
+    [InlineData(ErrorCodes.General.NotFound, 404, "Not Found")]
+    [InlineData(ErrorCodes.General.Conflict, 409, "Conflict")]
     public void Map_Result_TitleMatchesStatusReason(string code, int expectedStatus, string expectedTitle)
     {
         var result = Result.Failure(code, "Test message.");
@@ -136,6 +170,7 @@ public sealed class ResultProblemDetailsMapperTests
         var problemDetails = Assert.IsType<ProblemDetails>(objectResult.Value);
         Assert.Equal(expectedStatus, problemDetails.Status);
         Assert.NotNull(problemDetails.Title);
+        Assert.NotNull(problemDetails.Type);
         Assert.True(problemDetails.Extensions.ContainsKey("code"));
         Assert.Equal(expectedCode, problemDetails.Extensions["code"]?.ToString());
     }

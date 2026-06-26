@@ -23,8 +23,11 @@ internal static class ResultProblemDetailsMapper
     /// </summary>
     public static IActionResult Map(Result result)
     {
+        if (result.IsSuccess)
+            throw new InvalidOperationException("A successful Result cannot be mapped to ProblemDetails.");
+
         var statusCode = ErrorCodeToHttpStatus.GetStatusCode(result.Error.Code);
-        var problemDetails = BuildProblemDetails(statusCode, result.Error.Code, result.Error.Message);
+        var problemDetails = ProblemDetailsResponseFactory.Create(statusCode, result.Error.Code, result.Error.Message);
 
         return new ObjectResult(problemDetails) { StatusCode = statusCode };
     }
@@ -36,40 +39,12 @@ internal static class ResultProblemDetailsMapper
     /// </summary>
     public static IActionResult Map<T>(Result<T> result)
     {
+        if (result.IsSuccess)
+            throw new InvalidOperationException("A successful Result cannot be mapped to ProblemDetails.");
+
         var statusCode = ErrorCodeToHttpStatus.GetStatusCode(result.Error.Code);
-        var problemDetails = BuildProblemDetails(statusCode, result.Error.Code, result.Error.Message);
+        var problemDetails = ProblemDetailsResponseFactory.Create(statusCode, result.Error.Code, result.Error.Message);
 
         return new ObjectResult(problemDetails) { StatusCode = statusCode };
     }
-
-    private static ProblemDetails BuildProblemDetails(int statusCode, string code, string detail)
-    {
-        var title = GetReasonPhrase(statusCode);
-
-        return new ProblemDetails
-        {
-            Status = statusCode,
-            Title = title,
-            Detail = detail,
-            Extensions = { ["code"] = code }
-        };
-    }
-
-    /// <summary>
-    /// Returns a human-readable reason phrase for common HTTP status codes.
-    /// Falls back to the status code number for uncommon codes.
-    /// </summary>
-    private static string GetReasonPhrase(int statusCode) => statusCode switch
-    {
-        400 => "Bad Request",
-        401 => "Unauthorized",
-        403 => "Forbidden",
-        404 => "Not Found",
-        405 => "Method Not Allowed",
-        409 => "Conflict",
-        422 => "Unprocessable Entity",
-        429 => "Too Many Requests",
-        500 => "Internal Server Error",
-        _ => $"HTTP {statusCode}"
-    };
 }

@@ -1,4 +1,5 @@
 using Project.Api.Controllers.Middleware;
+using Project.Application.Common;
 
 namespace Project.UnitTests.Middleware;
 
@@ -12,14 +13,14 @@ public sealed class ErrorCodeToHttpStatusTests
     // ── Active auth codes ────────────────────────────────────
 
     [Theory]
-    [InlineData("AUTH_INVALID_CREDENTIALS", 401)]
-    [InlineData("AUTH_TOKEN_EXPIRED", 401)]
-    [InlineData("AUTH_TOKEN_REUSE_DETECTED", 401)]
-    [InlineData("AUTH_REFRESH_TOKEN_MISSING", 400)]
-    [InlineData("VALIDATION_ERROR", 400)]
-    [InlineData("NOT_FOUND", 404)]
-    [InlineData("CONFLICT", 409)]
-    public void GetStatusCode_ActiveAuthCodes_ReturnsExpected(string errorCode, int expectedStatus)
+    [InlineData(ErrorCodes.Auth.InvalidCredentials, 401)]
+    [InlineData(ErrorCodes.Auth.TokenExpired, 401)]
+    [InlineData(ErrorCodes.Auth.TokenReuseDetected, 401)]
+    [InlineData(ErrorCodes.Auth.RefreshTokenMissing, 400)]
+    [InlineData(ErrorCodes.General.ValidationError, 400)]
+    [InlineData(ErrorCodes.General.NotFound, 404)]
+    [InlineData(ErrorCodes.General.Conflict, 409)]
+    public void GetStatusCode_ActiveCodes_ReturnsExpected(string errorCode, int expectedStatus)
     {
         var status = ErrorCodeToHttpStatus.GetStatusCode(errorCode);
 
@@ -29,8 +30,8 @@ public sealed class ErrorCodeToHttpStatusTests
     // ── Reserved / future-proof codes ────────────────────────
 
     [Theory]
-    [InlineData("AUTH_USER_BLOCKED", 401)]
-    [InlineData("AUTH_TOKEN_REVOKED", 401)]
+    [InlineData(ErrorCodes.Auth.UserBlocked, 401)]
+    [InlineData(ErrorCodes.Auth.TokenRevoked, 401)]
     public void GetStatusCode_ReservedAuthCodes_ReturnsExpected(string errorCode, int expectedStatus)
     {
         var status = ErrorCodeToHttpStatus.GetStatusCode(errorCode);
