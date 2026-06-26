@@ -1,7 +1,9 @@
 using FluentValidation;
 using Project.Api.Controllers.Controllers;
+using Project.Api.Controllers.Middleware;
 using Project.Application.Auth;
 using Project.Infrastructure;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +12,21 @@ builder.Services.AddHealthChecks();
 
 // Controllers
 builder.Services.AddControllers();
+
+// Enum serialization — values appear as strings in JSON responses.
+// Controllers path (MVC).
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+// Minimal APIs path (health checks, etc.).
+builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+// RFC 7807 ProblemDetails support — enables consistent error responses.
+builder.Services.AddProblemDetails();
+
+// Global exception handler — catches unhandled exceptions and returns safe 500s.
+builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 
 // Infrastructure (EF Core, repositories, password hasher, user session, clock)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -39,6 +56,11 @@ builder.Services.AddScoped<AuthController>();
 var app = builder.Build();
 
 // ── Middleware pipeline ───────────────────────────────────
+// Exception/status handling BEFORE auth so framework-generated
+// 404/405 and pipeline exceptions normalize consistently.
+app.UseExceptionHandler();
+app.UseStatusCodePages();
+
 app.UseAuthentication();
 app.UseAuthorization();
 

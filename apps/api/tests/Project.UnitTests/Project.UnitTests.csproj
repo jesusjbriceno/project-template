@@ -30,6 +30,7 @@
     <ProjectReference Include="..\..\src\Project.Application\Project.Application.csproj" />
     <ProjectReference Include="..\..\src\Project.Infrastructure\Project.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Project.MigrationService\Project.MigrationService.csproj" />
+    <ProjectReference Include="..\..\src\Project.Api.Controllers\Project.Api.Controllers.csproj" />
   </ItemGroup>
 
 </Project>

@@ -11,4 +11,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Project.UnitTests" />
+    <InternalsVisibleTo Include="Project.IntegrationTests" />
+  </ItemGroup>
+
 </Project>
