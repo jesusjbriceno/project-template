@@ -2,7 +2,7 @@
 
 Full-stack monorepo template: .NET 10 API + React TypeScript frontend, Docker-ready.
 
-**Current phase**: Domain, Application, Infrastructure EF Core, and MigrationService initial seed are complete. The next backend area is API auth endpoints / controllers. Frontend is still a static placeholder — React/Vite app with TanStack Router arrives in a later phase.
+**Current phase**: Domain, Application, Infrastructure EF Core, MigrationService initial seed, and API auth endpoints (JWT login/refresh/logout) are complete. The next backend area is API hardening/foundation: ProblemDetails/Result mapping, OpenAPI metadata for auth, `.http` smoke docs, and auth rate limiting. Frontend is still a static placeholder — React/Vite app with TanStack Router arrives in a later phase.
 
 ## Quick Start
 
@@ -30,7 +30,7 @@ curl http://localhost:3000
 | Backend | .NET 10, ASP.NET Core |
 | Backend architecture | Clean Architecture + CQRS + Result pattern |
 | Persistence | EF Core + PostgreSQL, repositories |
-| Auth | JWT access + refresh token rotation |
+| Auth | JWT HS256 access tokens, refresh token rotation, HttpOnly/Secure/SameSite cookies |
 | Authorization | Roles + granular permissions (RBAC) |
 | Frontend | React + TypeScript + Tailwind + pnpm + Zustand + Zod |
 | Frontend router | TanStack Router (type-safe routes, typed search params, nested layouts) |
@@ -112,5 +112,9 @@ cp .env.example .env
 | `ConnectionStrings__DefaultConnection` | EF Core connection string |
 | `SUPERADMIN_EMAIL` | Initial superadmin email — used by MigrationService seed |
 | `SUPERADMIN_PASSWORD` | Initial superadmin password — used by MigrationService seed |
+| `Jwt__Secret` | HS256 signing key (≥32 chars, generate with `openssl rand -base64 32`) |
+| `Jwt__Issuer` | Token issuer (default: `project-template-api`) |
+| `Jwt__Audience` | Token audience (default: `project-template-client`) |
+| `Jwt__RefreshTokenDays` | Refresh token lifetime in days (default: `7`) |
 
-> **Next backend area:** API auth endpoints / controllers.
+> **Next backend area:** API hardening/foundation (ProblemDetails/Result mapping, OpenAPI metadata for auth, `.http` smoke docs, auth rate limiting), then Users/Roles/Permissions management APIs + authorization policies.

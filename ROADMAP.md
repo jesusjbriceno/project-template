@@ -13,6 +13,7 @@ This roadmap tracks the implementation state of the base project. It is updated 
 | Application layer | ✅ Archived | Source-of-truth spec exists at `openspec/specs/application-layer/spec.md`; audit trail archived under `openspec/changes/archive/2026-06-15-application-layer/`. |
 | Infrastructure EF Core | ✅ Archived | Source-of-truth spec exists at `openspec/specs/infrastructure-ef-core/spec.md`; audit trail archived under `openspec/changes/archive/2026-06-17-infrastructure-ef-core/`. |
 | MigrationService + initial seed | ✅ Done/Archived | 17/17 tasks complete, 421/421 tests green. Archived under `openspec/changes/archive/2026-06-18-migration-service-initial-seed/`. |
+| API Auth Endpoints | ✅ Done/Archived | Login, refresh, logout with JWT HS256 + refresh token rotation. 497 tests green. Archived under `openspec/changes/archive/2026-06-25-api-auth-endpoints/`. |
 
 ## Domain Model Slices
 
@@ -35,7 +36,9 @@ This roadmap tracks the implementation state of the base project. It is updated 
 6. ✅ Application layer verified, archived, and main spec synced.
 7. ✅ Infrastructure EF Core verified, archived, merged to `develop`, and main spec synced.
 8. ✅ MigrationService + initial seed implemented, verified, and archived. Docker deployment config validated on Ubuntu ARM VPS (db healthy, migration exits 0, api healthy on 8080, web on configurable WEB_PORT).
-9. 🔵 Next: API Auth endpoints / controllers.
+9. ✅ API Auth endpoints / controllers — implemented and archived. POST /auth/login, POST /auth/refresh, POST /auth/logout with JWT HS256 + refresh token rotation + HttpOnly/Secure/SameSite cookies. 497 tests green.
+10. 🔵 Next: API hardening/foundation — ProblemDetails/Result mapping, OpenAPI metadata for auth, `.http` smoke docs, auth rate limiting.
+11. ⬜ After hardening: Users/Roles/Permissions CRUD APIs + authorization policies.
 
 ## Backlog by Phase
 
@@ -74,11 +77,14 @@ This roadmap tracks the implementation state of the base project. It is updated 
 
 ### API
 
-- 🔵 Auth endpoints — selected next.
+- ✅ Auth endpoints — login, refresh, logout with JWT HS256 + refresh token rotation + HttpOnly/Secure/SameSite cookies.
+- 🔵 API hardening/foundation — selected next.
+- 🔵 ProblemDetails/Result mapping.
+- 🔵 OpenAPI metadata for auth.
+- 🔵 `.http` smoke docs.
+- ⬜ Auth rate limiting.
 - ⬜ Users/Roles/Permissions controllers.
 - ⬜ Permission authorization policies.
-- ⬜ ProblemDetails/Result mapping.
-- ⬜ OpenAPI metadata.
 
 ### Frontend
 
