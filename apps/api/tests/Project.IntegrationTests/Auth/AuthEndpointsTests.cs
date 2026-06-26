@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Project.Application.Common;
 using Xunit;
 using ApiProgram = ApiControllers::Program;
 
@@ -180,6 +181,10 @@ public sealed class AuthEndpointsTests : IClassFixture<AuthTestFixture>
         Assert.Equal("Bad Request", body.Title);
         Assert.Equal("AUTH_REFRESH_TOKEN_MISSING", ((JsonElement)body.Extensions["code"]!).GetString());
     }
+
+    /// <summary>
+    /// Logout-revoked refresh token reused → 401 AUTH_TOKEN_REUSE_DETECTED.
+    /// </summary>
     [Fact]
     public async Task Refresh_RevokedToken_Returns401()
     {
@@ -203,14 +208,15 @@ public sealed class AuthEndpointsTests : IClassFixture<AuthTestFixture>
 
         var response = await client.SendAsync(refreshRequest);
 
-        // ASSERT — should be 401 (token revoked)
+        // ASSERT — should be 401 (reuse detected after logout revocation)
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
 
         var body = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         Assert.NotNull(body);
         Assert.Equal(401, body!.Status);
         Assert.Equal("Unauthorized", body.Title);
-        Assert.True(body.Extensions.ContainsKey("code"));
+        Assert.Equal(ErrorCodes.Auth.TokenReuseDetected, ((JsonElement)body.Extensions["code"]!).GetString());
+        Assert.Equal("Refresh token is invalid or no longer usable.", body.Detail);
 
         // ASSERT — cookie is cleared (CRITICAL 3 + WARNING 5)
         AssertContainsClearSetCookie(response);
@@ -255,7 +261,8 @@ public sealed class AuthEndpointsTests : IClassFixture<AuthTestFixture>
         Assert.NotNull(body);
         Assert.Equal(401, body!.Status);
         Assert.Equal("Unauthorized", body.Title);
-        Assert.Equal("AUTH_TOKEN_REUSE_DETECTED", ((JsonElement)body.Extensions["code"]!).GetString());
+        Assert.Equal(ErrorCodes.Auth.TokenReuseDetected, ((JsonElement)body.Extensions["code"]!).GetString());
+        Assert.Equal("Refresh token is invalid or no longer usable.", body.Detail);
 
         // ASSERT — cookie is cleared (family revoked, client should discard all tokens)
         AssertContainsClearSetCookie(response);

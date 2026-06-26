@@ -19,6 +19,8 @@ namespace Project.Api.Controllers.Controllers;
 [Route("auth")]
 public sealed class AuthController : ControllerBase
 {
+    private const string SafeRefreshFailureDetail = "Refresh token is invalid or no longer usable.";
+
     private readonly LoginCommandHandler _loginHandler;
     private readonly RefreshTokenCommandHandler _refreshHandler;
     private readonly LogoutCommandHandler _logoutHandler;
@@ -66,7 +68,7 @@ public sealed class AuthController : ControllerBase
         var command = (LoginCommand)request;
 
         // 2. Validate
-        var validationResult = await _loginValidator.ValidateAsync(command);
+        var validationResult = await _loginValidator.ValidateAsync(command, HttpContext.RequestAborted);
         if (!validationResult.IsValid)
             return ResultProblemDetailsMapper.Map(
                 Result.Failure(ErrorCodes.Auth.InvalidCredentials, "Invalid credentials."));
@@ -107,7 +109,7 @@ public sealed class AuthController : ControllerBase
 
         // 2. Create and validate command
         var command = new RefreshTokenCommand(refreshTokenRaw);
-        var validationResult = await _refreshValidator.ValidateAsync(command);
+        var validationResult = await _refreshValidator.ValidateAsync(command, HttpContext.RequestAborted);
         if (!validationResult.IsValid)
             return ResultProblemDetailsMapper.Map(
                 Result.Failure(ErrorCodes.Auth.RefreshTokenMissing, "Refresh token is required."));
@@ -120,7 +122,8 @@ public sealed class AuthController : ControllerBase
         {
             // Clear cookie on token expiry, revocation, or reuse
             ClearRefreshTokenCookie();
-            return ResultProblemDetailsMapper.Map(result);
+            return ResultProblemDetailsMapper.Map(
+                Result.Failure(result.Error.Code, SafeRefreshFailureDetail));
         }
 
         // 5. Set rotated refresh token cookie
@@ -150,7 +153,7 @@ public sealed class AuthController : ControllerBase
 
         // 2. Create and validate command
         var command = new LogoutCommand(refreshTokenRaw);
-        var validationResult = await _logoutValidator.ValidateAsync(command);
+        var validationResult = await _logoutValidator.ValidateAsync(command, HttpContext.RequestAborted);
         if (!validationResult.IsValid)
             return ResultProblemDetailsMapper.Map(
                 Result.Failure(ErrorCodes.Auth.RefreshTokenMissing, "Refresh token is required."));
