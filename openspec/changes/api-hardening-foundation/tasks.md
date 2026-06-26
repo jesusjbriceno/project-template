@@ -35,10 +35,10 @@ Chain strategy: feature-branch-chain
 
 ## Phase 2: Auth Integration
 
-- [ ] 2.1 [RED] Update `AuthEndpointsTests` — assert ProblemDetails shape on all error paths
-- [ ] 2.2 [GREEN] Modify `AuthController` — replace ad-hoc `{ code, message }` with mapper-based ProblemDetails
-- [ ] 2.3 Add `[ProducesResponseType]` metadata on login/refresh (200, 400, 401) and logout (204, 400)
-- [ ] 2.4 [REFACTOR] Remove test `ErrorResponseContract`; deserialize as `ProblemDetails` and check `extensions.code`
+- [x] 2.1 [RED] Update `AuthEndpointsTests` — assert ProblemDetails shape on all error paths
+- [x] 2.2 [GREEN] Modify `AuthController` — replace ad-hoc `{ code, message }` with mapper-based ProblemDetails
+- [x] 2.3 Add `[ProducesResponseType]` metadata on login/refresh (200, 400, 401) and logout (204, 400)
+- [x] 2.4 [REFACTOR] Remove test `ErrorResponseContract`; deserialize as `ProblemDetails` and check `extensions.code`
 
 ## Phase 3: Documentation & OpenAPI
 

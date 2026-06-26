@@ -2,6 +2,8 @@ extern alias ApiControllers;
 
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 using ApiProgram = ApiControllers::Program;
@@ -80,9 +82,13 @@ public sealed class AuthEndpointsTests : IClassFixture<AuthTestFixture>
         // ASSERT
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
 
-        var body = await response.Content.ReadFromJsonAsync<ErrorResponseContract>();
+        var body = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         Assert.NotNull(body);
-        Assert.Contains("Invalid credentials", body!.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(401, body!.Status);
+        Assert.Equal("Unauthorized", body.Title);
+        // Generic detail — must NOT leak user existence
+        Assert.Contains("Invalid", body.Detail, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("AUTH_INVALID_CREDENTIALS", ((JsonElement)body.Extensions["code"]!).GetString());
 
         // ASSERT — no Set-Cookie header
         Assert.False(response.Headers.Contains("Set-Cookie"));
@@ -104,9 +110,12 @@ public sealed class AuthEndpointsTests : IClassFixture<AuthTestFixture>
         // ASSERT
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
 
-        var body = await response.Content.ReadFromJsonAsync<ErrorResponseContract>();
+        var body = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         Assert.NotNull(body);
-        Assert.Contains("Invalid credentials", body!.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(401, body!.Status);
+        Assert.Equal("Unauthorized", body.Title);
+        Assert.Contains("Invalid", body.Detail, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("AUTH_INVALID_CREDENTIALS", ((JsonElement)body.Extensions["code"]!).GetString());
     }
 
     // ─────────────── Refresh ───────────────
@@ -165,15 +174,12 @@ public sealed class AuthEndpointsTests : IClassFixture<AuthTestFixture>
         // ASSERT
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
-        var body = await response.Content.ReadFromJsonAsync<ErrorResponseContract>();
+        var body = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         Assert.NotNull(body);
-        Assert.Equal("AUTH_REFRESH_TOKEN_MISSING", body!.Code);
+        Assert.Equal(400, body!.Status);
+        Assert.Equal("Bad Request", body.Title);
+        Assert.Equal("AUTH_REFRESH_TOKEN_MISSING", ((JsonElement)body.Extensions["code"]!).GetString());
     }
-
-    /// <summary>
-    /// Task 3.1: Refresh with already-revoked token (via logout) → 401.
-    /// First we logout (revokes entire family), then try to use the same cookie.
-    /// </summary>
     [Fact]
     public async Task Refresh_RevokedToken_Returns401()
     {
@@ -199,6 +205,12 @@ public sealed class AuthEndpointsTests : IClassFixture<AuthTestFixture>
 
         // ASSERT — should be 401 (token revoked)
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+
+        var body = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        Assert.NotNull(body);
+        Assert.Equal(401, body!.Status);
+        Assert.Equal("Unauthorized", body.Title);
+        Assert.True(body.Extensions.ContainsKey("code"));
 
         // ASSERT — cookie is cleared (CRITICAL 3 + WARNING 5)
         AssertContainsClearSetCookie(response);
@@ -239,9 +251,11 @@ public sealed class AuthEndpointsTests : IClassFixture<AuthTestFixture>
         // ASSERT — reuse detected, 401 with cookie cleared
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
 
-        var body = await response.Content.ReadFromJsonAsync<ErrorResponseContract>();
+        var body = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         Assert.NotNull(body);
-        Assert.Equal("AUTH_TOKEN_REUSE_DETECTED", body!.Code);
+        Assert.Equal(401, body!.Status);
+        Assert.Equal("Unauthorized", body.Title);
+        Assert.Equal("AUTH_TOKEN_REUSE_DETECTED", ((JsonElement)body.Extensions["code"]!).GetString());
 
         // ASSERT — cookie is cleared (family revoked, client should discard all tokens)
         AssertContainsClearSetCookie(response);
@@ -298,9 +312,11 @@ public sealed class AuthEndpointsTests : IClassFixture<AuthTestFixture>
         // ASSERT
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
-        var body = await response.Content.ReadFromJsonAsync<ErrorResponseContract>();
+        var body = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         Assert.NotNull(body);
-        Assert.Equal("AUTH_REFRESH_TOKEN_MISSING", body!.Code);
+        Assert.Equal(400, body!.Status);
+        Assert.Equal("Bad Request", body.Title);
+        Assert.Equal("AUTH_REFRESH_TOKEN_MISSING", ((JsonElement)body.Extensions["code"]!).GetString());
     }
 
     // ─────────────── Helpers ───────────────
@@ -341,5 +357,4 @@ public sealed class AuthEndpointsTests : IClassFixture<AuthTestFixture>
 
     // Inline contracts for test deserialization — avoid coupling to API DTOs.
     private sealed record TokenResponseContract(string AccessToken, int ExpiresIn);
-    private sealed record ErrorResponseContract(string Code, string Message);
 }

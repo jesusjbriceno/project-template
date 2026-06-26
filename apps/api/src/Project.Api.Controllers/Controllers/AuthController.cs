@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Project.Api.Controllers.Contracts;
+using Project.Api.Controllers.Middleware;
 using Project.Application.Auth;
 using Project.Application.Common;
 using Project.Infrastructure.Security;
@@ -56,6 +57,9 @@ public sealed class AuthController : ControllerBase
     /// On failure: returns 401 with a generic message.
     /// </summary>
     [HttpPost("login")]
+    [ProducesResponseType(typeof(TokenResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         // 1. Map to command
@@ -64,14 +68,15 @@ public sealed class AuthController : ControllerBase
         // 2. Validate
         var validationResult = await _loginValidator.ValidateAsync(command);
         if (!validationResult.IsValid)
-            return Unauthorized(new { code = ErrorCodes.Auth.InvalidCredentials, message = "Invalid credentials." });
+            return ResultProblemDetailsMapper.Map(
+                Result.Failure(ErrorCodes.Auth.InvalidCredentials, "Invalid credentials."));
 
         // 3. Handle
         var result = await _loginHandler.Handle(command, HttpContext.RequestAborted);
 
         // 4. Map result → HTTP
         if (result.IsFailure)
-            return Unauthorized(new { code = result.Error.Code, message = result.Error.Message });
+            return ResultProblemDetailsMapper.Map(result);
 
         // 5. Set refresh token cookie
         SetRefreshTokenCookie(result.Value!.RefreshToken);
@@ -89,18 +94,23 @@ public sealed class AuthController : ControllerBase
     /// On reuse detection: revokes the entire token family.
     /// </summary>
     [HttpPost("refresh")]
+    [ProducesResponseType(typeof(TokenResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Refresh()
     {
         // 1. Read cookie
         var refreshTokenRaw = Request.Cookies["refreshToken"];
         if (string.IsNullOrWhiteSpace(refreshTokenRaw))
-            return BadRequest(new { code = ErrorCodes.Auth.RefreshTokenMissing, message = "Refresh token is required." });
+            return ResultProblemDetailsMapper.Map(
+                Result.Failure(ErrorCodes.Auth.RefreshTokenMissing, "Refresh token is required."));
 
         // 2. Create and validate command
         var command = new RefreshTokenCommand(refreshTokenRaw);
         var validationResult = await _refreshValidator.ValidateAsync(command);
         if (!validationResult.IsValid)
-            return BadRequest(new { code = ErrorCodes.Auth.RefreshTokenMissing, message = "Refresh token is required." });
+            return ResultProblemDetailsMapper.Map(
+                Result.Failure(ErrorCodes.Auth.RefreshTokenMissing, "Refresh token is required."));
 
         // 3. Handle
         var result = await _refreshHandler.Handle(command, HttpContext.RequestAborted);
@@ -110,7 +120,7 @@ public sealed class AuthController : ControllerBase
         {
             // Clear cookie on token expiry, revocation, or reuse
             ClearRefreshTokenCookie();
-            return Unauthorized(new { code = result.Error.Code, message = result.Error.Message });
+            return ResultProblemDetailsMapper.Map(result);
         }
 
         // 5. Set rotated refresh token cookie
@@ -128,18 +138,22 @@ public sealed class AuthController : ControllerBase
     /// Idempotent — already-revoked or missing tokens return success.
     /// </summary>
     [HttpPost("logout")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Logout()
     {
         // 1. Read cookie
         var refreshTokenRaw = Request.Cookies["refreshToken"];
         if (string.IsNullOrWhiteSpace(refreshTokenRaw))
-            return BadRequest(new { code = ErrorCodes.Auth.RefreshTokenMissing, message = "Refresh token is required." });
+            return ResultProblemDetailsMapper.Map(
+                Result.Failure(ErrorCodes.Auth.RefreshTokenMissing, "Refresh token is required."));
 
         // 2. Create and validate command
         var command = new LogoutCommand(refreshTokenRaw);
         var validationResult = await _logoutValidator.ValidateAsync(command);
         if (!validationResult.IsValid)
-            return BadRequest(new { code = ErrorCodes.Auth.RefreshTokenMissing, message = "Refresh token is required." });
+            return ResultProblemDetailsMapper.Map(
+                Result.Failure(ErrorCodes.Auth.RefreshTokenMissing, "Refresh token is required."));
 
         // 3. Handle (idempotent)
         await _logoutHandler.Handle(command, HttpContext.RequestAborted);
