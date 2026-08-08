@@ -53,23 +53,42 @@ builder.Services.AddScoped<IValidator<LogoutCommand>, LogoutCommandValidator>();
 // ── Auth controller ──
 builder.Services.AddScoped<AuthController>();
 
+// OpenAPI document generation — Development only.
+// Uses .NET 10 built-in support (no Swashbuckle).
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddOpenApi();
+}
+
 var app = builder.Build();
 
 // ── Middleware pipeline ───────────────────────────────────
 // Exception/status handling BEFORE auth so framework-generated
 // 404/405 and pipeline exceptions normalize consistently.
 app.UseExceptionHandler();
-app.UseStatusCodePages();
+app.UseStatusCodePages(FrameworkStatusCodePages.WriteAsync);
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 // ── Endpoints ─────────────────────────────────────────────
 app.MapHealthChecks("/health");
+
+// OpenAPI document endpoint — Development only.
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
+
 app.MapControllers();
 
 // ── Run ──────────────────────────────────────────────────
 app.Run();
 
 // Make the Program class accessible to integration tests via WebApplicationFactory.
+/// <summary>
+/// Composition root for the API host. Configures services, middleware pipeline,
+/// and endpoint mappings. Partial class to allow test access via
+/// <c>WebApplicationFactory&lt;Program&gt;</c>.
+/// </summary>
 public partial class Program { }

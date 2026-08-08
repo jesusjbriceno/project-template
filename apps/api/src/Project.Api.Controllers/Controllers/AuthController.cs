@@ -30,6 +30,9 @@ public sealed class AuthController : ControllerBase
     private readonly JwtOptions _jwtOptions;
     private readonly IWebHostEnvironment _env;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuthController"/> class.
+    /// </summary>
     public AuthController(
         LoginCommandHandler loginHandler,
         RefreshTokenCommandHandler refreshHandler,

@@ -1,0 +1,70 @@
+### API Smoke Documentation
+### Auth flow: login, refresh, logout
+###
+### Usage:
+###   1. Uncomment ONE @baseUrl variant below
+###   2. Send requests top-to-bottom
+###   3. Login success sets @accessToken and @refreshToken via response handlers
+
+### ── Base URL (uncomment one) ────────────────────────────────
+
+### Docker Compose (default):
+@baseUrl = http://localhost:8080
+
+### Local dotnet run:
+# @baseUrl = http://localhost:5118
+
+### ── Health ──────────────────────────────────────────────────
+
+### Health check — should return 200.
+GET {{baseUrl}}/health
+
+### ── Login ───────────────────────────────────────────────────
+
+### Login with valid credentials.
+### Expected: 200 OK, body { accessToken, expiresIn }, Set-Cookie: refreshToken
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "StrongP@ssw0rd!"
+}
+
+### Login with invalid credentials.
+### Expected: 401 ProblemDetails, extensions.code: "AUTH_INVALID_CREDENTIALS"
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "WrongP@ssw0rd!"
+}
+
+### ── Refresh ─────────────────────────────────────────────────
+
+### Refresh with valid cookie (set accessToken from login response first).
+### Expected: 200 OK, new access token in body, rotated refresh token cookie.
+POST {{baseUrl}}/auth/refresh
+Cookie: refreshToken={{refreshToken}}
+
+### Refresh without cookie.
+### Expected: 400 ProblemDetails, extensions.code: "AUTH_REFRESH_TOKEN_MISSING"
+POST {{baseUrl}}/auth/refresh
+
+### ── Logout ──────────────────────────────────────────────────
+
+### Logout with valid cookie — revokes token family, clears cookie.
+### Expected: 204 No Content, Set-Cookie: refreshToken=; Max-Age=0
+POST {{baseUrl}}/auth/logout
+Cookie: refreshToken={{refreshToken}}
+
+### Logout without cookie.
+### Expected: 400 ProblemDetails, extensions.code: "AUTH_REFRESH_TOKEN_MISSING"
+POST {{baseUrl}}/auth/logout
+
+### ── OpenAPI (Development only) ──────────────────────────────
+
+### OpenAPI document — available only when ASPNETCORE_ENVIRONMENT=Development.
+### Expected: 200 OK with OpenAPI 3.x JSON in Development; 404 in Production.
+GET {{baseUrl}}/openapi/v1.json

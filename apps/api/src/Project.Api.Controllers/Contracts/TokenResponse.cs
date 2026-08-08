@@ -9,6 +9,9 @@ namespace Project.Api.Controllers.Contracts;
 /// </summary>
 public sealed record TokenResponse(string AccessToken, int ExpiresIn)
 {
+    /// <summary>
+    /// Converts a <see cref="TokenPairDto"/> to a <see cref="TokenResponse"/>.
+    /// </summary>
     public static explicit operator TokenResponse(TokenPairDto dto) =>
         new(dto.AccessToken, dto.ExpiresInSeconds);
 }

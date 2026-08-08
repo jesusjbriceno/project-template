@@ -119,6 +119,34 @@ public sealed class AuthEndpointsTests : IClassFixture<AuthTestFixture>
         Assert.Equal("AUTH_INVALID_CREDENTIALS", ((JsonElement)body.Extensions["code"]!).GetString());
     }
 
+    /// <summary>
+    /// Deactivated user → same 401 generic response (no enumeration of account state).
+    /// Dedicated test for the deactivated-user branch of the generic-401 enumeration guard.
+    /// </summary>
+    [Fact]
+    public async Task Login_DeactivatedUser_Returns401SameGenericResponse()
+    {
+        // ARRANGE
+        using var client = _fixture.CreateClient();
+        var payload = new { email = AuthTestFixture.DeactivatedUserEmail, password = AuthTestFixture.DeactivatedUserPassword };
+
+        // ACT
+        var response = await client.PostAsJsonAsync("/auth/login", payload);
+
+        // ASSERT — identical shape, status, and code as wrong-password and nonexistent-user
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+
+        var body = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        Assert.NotNull(body);
+        Assert.Equal(401, body!.Status);
+        Assert.Equal("Unauthorized", body.Title);
+        Assert.Contains("Invalid", body.Detail, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("AUTH_INVALID_CREDENTIALS", ((JsonElement)body.Extensions["code"]!).GetString());
+
+        // ASSERT — no Set-Cookie header
+        Assert.False(response.Headers.Contains("Set-Cookie"));
+    }
+
     // ─────────────── Refresh ───────────────
 
     /// <summary>

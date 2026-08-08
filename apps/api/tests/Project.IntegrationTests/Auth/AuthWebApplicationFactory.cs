@@ -49,10 +49,12 @@ public sealed class AuthWebApplicationFactory : WebApplicationFactory<ApiProgram
 
         // Register the test-only protected endpoint controller so AuthMiddlewareTests
         // can verify JWT Bearer middleware without leaking /auth/me to production.
+        // Also register the test enum controller for enum serialization evidence.
         builder.ConfigureServices(services =>
         {
             services.AddControllers()
-                .AddApplicationPart(typeof(TestAuthController).Assembly);
+                .AddApplicationPart(typeof(TestAuthController).Assembly)
+                .AddApplicationPart(typeof(Documentation.TestEnumController).Assembly);
         });
 
         // Use test environment so Secure cookie policy is SameAsRequest

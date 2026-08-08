@@ -2,6 +2,7 @@ extern alias ApiControllers;
 
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Xunit;
 using ApiProgram = ApiControllers::Program;
@@ -79,6 +80,22 @@ public sealed class ExceptionHandlerIntegrationTests : IClassFixture<Auth.AuthTe
         var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         Assert.NotNull(problemDetails);
         Assert.Equal(404, problemDetails!.Status);
+
+        // ASSERT — stable public code
+        Assert.Equal("ROUTING_NOT_FOUND", ((JsonElement)problemDetails.Extensions["code"]!).GetString());
+
+        // ASSERT — generic detail: no route, no stack, no internal exception
+        Assert.NotNull(problemDetails.Detail);
+        Assert.DoesNotContain("/nonexistent-route-xyz", problemDetails.Detail, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("stack", problemDetails.Detail, StringComparison.OrdinalIgnoreCase);
+
+        // ASSERT — no leakage of internals in raw body: no file path, line number, exception type, or stack frame
+        var rawBody = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("/nonexistent-route-xyz", rawBody, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("   at ", rawBody, StringComparison.Ordinal);
+        Assert.DoesNotContain(".cs:", rawBody, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("line ", rawBody, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Exception", rawBody, StringComparison.OrdinalIgnoreCase);
     }
 
     // ── 405 method not allowed → ProblemDetails ──────────────
@@ -101,6 +118,23 @@ public sealed class ExceptionHandlerIntegrationTests : IClassFixture<Auth.AuthTe
         var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         Assert.NotNull(problemDetails);
         Assert.Equal(405, problemDetails!.Status);
+
+        // ASSERT — stable public code
+        Assert.Equal("METHOD_NOT_ALLOWED", ((JsonElement)problemDetails.Extensions["code"]!).GetString());
+
+        // ASSERT — generic detail
+        Assert.NotNull(problemDetails.Detail);
+        Assert.DoesNotContain("stack", problemDetails.Detail, StringComparison.OrdinalIgnoreCase);
+
+        // ASSERT — no leakage of internals in raw body: no file path, line number, exception type, or stack frame
+        var rawBody405 = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("   at ", rawBody405, StringComparison.Ordinal);
+        Assert.DoesNotContain(".cs:", rawBody405, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("line ", rawBody405, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Exception", rawBody405, StringComparison.OrdinalIgnoreCase);
+
+        // ASSERT — Allow header preserved (content-level header in HttpResponseMessage)
+        Assert.True(response.Content.Headers.Contains("Allow"), "405 response must include Allow header");
     }
 
     // ── Client disconnect (cancellation) → no 500 ??

@@ -29,6 +29,8 @@ public sealed class AuthTestFixture : IAsyncLifetime
 {
     public const string TestUserEmail = "testuser@example.com";
     public const string TestUserPassword = "StrongP@ssw0rd!";
+    public const string DeactivatedUserEmail = "deactivated@example.com";
+    public const string DeactivatedUserPassword = "StrongP@ssw0rd!";
 
     private readonly PostgreSqlContainer _container;
     private string? _previousConnectionString;
@@ -72,6 +74,16 @@ public sealed class AuthTestFixture : IAsyncLifetime
             clock);
 
         context.Set<User>().Add(user);
+
+        // Seed a deactivated user for the generic-401 enumeration guard test
+        var deactivatedUser = User.Create(
+            Email.Create(DeactivatedUserEmail),
+            hasher.Hash(DeactivatedUserPassword),
+            "system",
+            clock);
+        deactivatedUser.Deactivate("system", clock, Array.Empty<User>());
+        context.Set<User>().Add(deactivatedUser);
+
         await context.SaveChangesAsync();
 
         // Save the previous value so we can restore it on dispose, preventing

@@ -156,6 +156,26 @@ public sealed class LoginCommandHandlerTests
         Assert.Equal(ErrorCodes.Auth.InvalidCredentials, result.Error.Code);
     }
 
+    // ─────────────── No control-flow exceptions: bad credentials do not throw ───────────────
+
+    [Fact]
+    public async Task Handle_BadCredentials_DoesNotThrow_ReturnsFailureResult()
+    {
+        // ARRANGE — nonexistent user (guaranteed failure path)
+        var repo = new FakeUserRepository { User = null, Roles = Array.Empty<Role>() };
+        var handler = CreateHandler(repo);
+        var command = new LoginCommand("nobody@nowhere.test", "AnyP@ss1!");
+
+        // ACT & ASSERT — the handler must return a Result, never throw
+        var result = await Record.ExceptionAsync(() => handler.Handle(command, CancellationToken.None));
+        Assert.Null(result); // no exception thrown
+
+        // Verify the Result is a failure with the expected code
+        var handleResult = await handler.Handle(command, CancellationToken.None);
+        Assert.True(handleResult.IsFailure);
+        Assert.Equal(ErrorCodes.Auth.InvalidCredentials, handleResult.Error.Code);
+    }
+
     // ─────────────── Configurable refresh token expiry ───────────────
 
     [Fact]
