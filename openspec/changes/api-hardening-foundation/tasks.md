@@ -42,8 +42,8 @@ Chain strategy: feature-branch-chain
 
 ## Phase 3: Documentation & OpenAPI
 
-- [ ] 3.1 Enable `<GenerateDocumentationFile>true</GenerateDocumentationFile>` in `Project.Api.Controllers.csproj`
-- [ ] 3.2 Add XML doc summary on `public partial class Program` in Program.cs
-- [ ] 3.3 Gate OpenAPI: register `AddOpenApi()` + `MapOpenApi()` only in Development
-- [ ] 3.4 Create `api-smoke.http` — auth flow covering login (success/401), refresh (success/missing-cookie), logout (success/missing-cookie 400), with Docker/local `@baseUrl` variants
-- [ ] 3.5 Build & verify — `dotnet build` zero warnings, OpenAPI loads in dev, 404 in prod
+- [x] 3.1 Enable `<GenerateDocumentationFile>true</GenerateDocumentationFile>` in `Project.Api.Controllers.csproj`
+- [x] 3.2 Add XML doc summary on `public partial class Program` in Program.cs
+- [x] 3.3 Gate OpenAPI: register `AddOpenApi()` + `MapOpenApi()` only in Development
+- [x] 3.4 Create `api-smoke.http` — auth flow covering login (success/401), refresh (success/missing-cookie), logout (success/missing-cookie 400), with Docker/local `@baseUrl` variants
+- [x] 3.5 Build & verify — `dotnet build` zero warnings, OpenAPI loads in dev, 404 in prod
